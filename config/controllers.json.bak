@@ -1,0 +1,145 @@
+{
+  "players": [
+    {
+      "player": 1,
+      "inputs": {
+        "UP": {
+          "type": "key",
+          "key": 1073741906,
+          "name": "up"
+        },
+        "DOWN": {
+          "type": "key",
+          "key": 1073741905,
+          "name": "down"
+        },
+        "LEFT": {
+          "type": "key",
+          "key": 1073741904,
+          "name": "left"
+        },
+        "RIGHT": {
+          "type": "key",
+          "key": 1073741903,
+          "name": "right"
+        },
+        "ATTACK": {
+          "type": "key",
+          "key": 1073742050,
+          "name": "left alt"
+        },
+        "JUMP": {
+          "type": "key",
+          "key": 1073742048,
+          "name": "left ctrl"
+        }
+      }
+    },
+    {
+      "player": 2,
+      "inputs": {
+        "UP": {
+          "type": "key",
+          "key": 114,
+          "name": "r"
+        },
+        "DOWN": {
+          "type": "key",
+          "key": 102,
+          "name": "f"
+        },
+        "LEFT": {
+          "type": "key",
+          "key": 100,
+          "name": "d"
+        },
+        "RIGHT": {
+          "type": "key",
+          "key": 103,
+          "name": "g"
+        },
+        "ATTACK": {
+          "type": "key",
+          "key": 115,
+          "name": "s"
+        },
+        "JUMP": {
+          "type": "key",
+          "key": 97,
+          "name": "a"
+        }
+      }
+    },
+    {
+      "player": 3,
+      "inputs": {
+        "UP": {
+          "type": "key",
+          "key": 105,
+          "name": "i"
+        },
+        "DOWN": {
+          "type": "key",
+          "key": 107,
+          "name": "k"
+        },
+        "LEFT": {
+          "type": "key",
+          "key": 106,
+          "name": "j"
+        },
+        "RIGHT": {
+          "type": "key",
+          "key": 108,
+          "name": "l"
+        },
+        "ATTACK": {
+          "type": "key",
+          "key": 1073742053,
+          "name": "right shift"
+        },
+        "JUMP": {
+          "type": "key",
+          "key": 1073742052,
+          "name": "right ctrl"
+        }
+      }
+    },
+    {
+      "player": 4,
+      "inputs": {
+        "UP": {
+          "type": "key",
+          "key": 121,
+          "name": "y"
+        },
+        "DOWN": {
+          "type": "key",
+          "key": 110,
+          "name": "n"
+        },
+        "LEFT": {
+          "type": "key",
+          "key": 118,
+          "name": "v"
+        },
+        "RIGHT": {
+          "type": "key",
+          "key": 117,
+          "name": "u"
+        },
+        "ATTACK": {
+          "type": "key",
+          "key": 101,
+          "name": "e"
+        },
+        "JUMP": {
+          "type": "key",
+          "key": 98,
+          "name": "b"
+        }
+      }
+    }
+  ],
+  "diagonals": "combinations"
+}
