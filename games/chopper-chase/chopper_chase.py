@@ -4,7 +4,7 @@ CHOPPER CHASE — 4-player competitive helicopter cave game.
 JUMP=thrust  LEFT/RIGHT=reposition  ATTACK=fire missile
 Left edge = death. Crash = death. 3 lives each. Last pilot wins.
 """
-import pygame, sys, json, math, random, os
+import pygame, sys, json, math, random, os, time
 
 pygame.init()
 screen = pygame.display.set_mode((1920, 1080), pygame.FULLSCREEN)
@@ -93,10 +93,13 @@ GAP_SHRINK_T = 600.0
 
 # ── Input — event-based so large SDLK codes (arrows, modifiers) work ─────────
 class Input:
+    INACTIVITY_TIMEOUT = 60.0
+
     def __init__(self):
         self.maps  = []
         self._prev = set()
         self._curr = set()
+        self._last_activity = time.monotonic()
         ctrl = os.path.join(os.path.dirname(__file__), "controllers.json")
         try:
             data = json.load(open(ctrl))
@@ -120,8 +123,15 @@ class Input:
         for e in events:
             if e.type == pygame.KEYDOWN:
                 self._curr.add(e.key)
+                self._last_activity = time.monotonic()
             elif e.type == pygame.KEYUP:
                 self._curr.discard(e.key)
+
+    def reset_activity(self):
+        self._last_activity = time.monotonic()
+
+    def timed_out(self):
+        return time.monotonic() - self._last_activity > self.INACTIVITY_TIMEOUT
 
     def held(self, pid, act):
         k = self.maps[pid].get(act) if pid < len(self.maps) else None
@@ -616,11 +626,14 @@ INACTIVE,WAITING,READY=0,1,2
 
 def lobby(inp):
     states=[INACTIVE]*4; cdwn=None
+    inp.reset_activity()
 
     while True:
         dt=min(clock.tick(60)/1000.0,0.05)
         events=pygame.event.get()
         inp.pump(events)
+
+        if inp.timed_out(): return False
 
         for e in events:
             if e.type==pygame.QUIT: return False
@@ -685,10 +698,12 @@ def end_screen(choppers, active, inp):
     ranked=sorted([choppers[i] for i in active],key=lambda c:c.lives,reverse=True)
     winner=ranked[0] if ranked[0].lives>0 else None
     sel=0
+    inp.reset_activity()
 
     while True:
         events=pygame.event.get()
         inp.pump(events)
+        if inp.timed_out(): return False
         for e in events:
             if e.type==pygame.QUIT: return False
             if e.type==pygame.KEYDOWN and e.key==pygame.K_ESCAPE: return False
@@ -722,12 +737,14 @@ def play(inp, active):
     next_wx  =float(W+OBS_MIN_GAP)
     elapsed,t_total,cdwn=0.0,0.0,3.0
     prev_alive={i:True for i in active}
+    inp.reset_activity()
 
     while True:
         dt=min(clock.tick(60)/1000.0,0.05)
         t_total+=dt
         events=pygame.event.get()
         inp.pump(events)
+        if inp.timed_out(): return False
         for e in events:
             if e.type==pygame.QUIT: return False
             if e.type==pygame.KEYDOWN and e.key==pygame.K_ESCAPE: return False

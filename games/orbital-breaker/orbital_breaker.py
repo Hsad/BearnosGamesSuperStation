@@ -10,6 +10,7 @@ import json
 import math
 import random
 import os
+import time
 
 pygame.init()
 
@@ -138,6 +139,8 @@ STARS = [(random.randint(0,W), random.randint(0,H),
 random.seed()
 
 # ── Input ─────────────────────────────────────────────────────────────────────
+INACTIVITY_TIMEOUT = 60.0
+
 class Input:
     ACTIONS = ("UP","DOWN","LEFT","RIGHT","ATTACK","JUMP")
 
@@ -145,6 +148,7 @@ class Input:
         self.maps = []
         self._prev = set()
         self._curr = set()
+        self._last_activity = time.monotonic()
         self._load()
 
     def _load(self):
@@ -175,8 +179,12 @@ class Input:
         for e in events:
             if e.type == pygame.KEYDOWN:
                 self._curr.add(e.key)
+                self._last_activity = time.monotonic()
             elif e.type == pygame.KEYUP:
                 self._curr.discard(e.key)
+
+    def timed_out(self):
+        return time.monotonic() - self._last_activity > INACTIVITY_TIMEOUT
 
     def held(self, pid, action):
         if pid >= len(self.maps): return False
@@ -747,6 +755,9 @@ class Game:
                     pygame.quit(); sys.exit()
 
             self.inp.update(events)
+
+            if self.inp.timed_out():
+                pygame.quit(); sys.exit()
 
             if   self.state == "ATTRACT":     self._attract(dt)
             elif self.state == "PLAYING":     self._playing(dt)

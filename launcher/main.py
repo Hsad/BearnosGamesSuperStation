@@ -12,9 +12,10 @@ from input_handler import (
     load_controllers, open_input_devices, poll_input, advance_combo,
     Action, ActionEvent
 )
-from renderer import (
+from renderer_pygame import (
     get_terminal_size, term_enter_alt_screen, term_leave_alt_screen,
-    render, render_launching, render_screensaver
+    render, render_boot, render_launching, render_screensaver, flicker_tick,
+    clear_scene_cache, warm_next_scene_cache
 )
 from launch_game import launch_game
 
@@ -24,7 +25,7 @@ CONTROLLERS_JSON = os.path.join(ARCADE_DIR, "config", "controllers.json")
 RESCAN_INTERVAL = 5.0
 SCREENSAVER_TIMEOUT = 60.0
 DISPLAY_OFF_TIMEOUT = 300.0  # 5 minutes after last input
-WAKE_REQUIRED_DURATION = 7.0  # seconds of inputs needed to wake display
+WAKE_REQUIRED_DURATION = 5.0  # seconds of inputs needed to wake display
 WAKE_GAP_TOLERANCE = 2.0      # reset wake attempt if no input for this long
 DEV_MODE = os.environ.get("ARCADE_DEV") == "1"
 
@@ -76,7 +77,7 @@ class App:
         if self.state != "MENU":
             return
 
-        if ev.action in (Action.ATTACK, Action.JUMP):
+        if ev.action == Action.ATTACK:
             games = self.game_list()
             if games:
                 self.state = "LAUNCHING"
@@ -130,6 +131,7 @@ def main():
     app = App()
     app.rescan()
     term_enter_alt_screen()
+    app.term_rows, app.term_cols = get_terminal_size()
     mtimes = _source_mtimes() if DEV_MODE else {}
     try:
         render(app)
@@ -140,6 +142,7 @@ def main():
                 app.rescan()
                 new_count = len(app.game_list())
                 if new_count != old_count:
+                    clear_scene_cache()
                     render(app)
 
             if app.screensaver_active and app.wake_attempt_start is not None:
@@ -154,8 +157,10 @@ def main():
                     app.last_wake_input_time = None
                     if was_display_off:
                         _display_power(True)
-                        time.sleep(0.5)
-                    render(app)
+                    render_boot(app, monitor_was_off=was_display_off)
+                    app.last_input_time = time.monotonic()
+                    while poll_input(app.fds, app.ctrl, timeout_ms=0):  # drain held buttons
+                        pass
 
             if app.state == "MENU" and not app.display_off:
                 idle = now - app.last_input_time
@@ -167,6 +172,10 @@ def main():
                     app.screensaver_active = True
                     render_screensaver()
 
+            if app.state == "MENU" and not app.screensaver_active and not app.display_off:
+                warm_next_scene_cache(app)
+
+            flicker_tick()
             events = poll_input(app.fds, app.ctrl, timeout_ms=100)
             if events:
                 for ev in events:

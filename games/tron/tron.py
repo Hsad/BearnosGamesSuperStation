@@ -225,6 +225,8 @@ def countdown(screen, sw, sh):
         for _ in pygame.event.get():
             pass
 
+INACTIVITY_TIMEOUT = 60.0
+
 def result_screen(screen, winner, controls, sw, sh):
     screen.fill((0, 0, 0))
     if winner:
@@ -241,11 +243,15 @@ def result_screen(screen, winner, controls, sw, sh):
     for _ in pygame.event.get():
         pass
 
+    last_activity = time.monotonic()
     while True:
+        if time.monotonic() - last_activity > INACTIVITY_TIMEOUT:
+            return False
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return False
             if event.type == pygame.KEYDOWN:
+                last_activity = time.monotonic()
                 if event.key in attack_keys: return True
                 if event.key in jump_keys:   return False
 
@@ -267,11 +273,15 @@ def run_round(screen, controls, sw, sh):
 
     countdown(screen, sw, sh)
 
+    last_activity = time.monotonic()
     while True:
+        if time.monotonic() - last_activity > INACTIVITY_TIMEOUT:
+            return "quit"
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return "quit"
             if event.type == pygame.KEYDOWN:
+                last_activity = time.monotonic()
                 for p in players:
                     if p.alive: p.key_down(event.key)
             if event.type == pygame.KEYUP:
