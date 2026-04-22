@@ -15,7 +15,7 @@ ENV_BASE = {
 }
 
 def launch_game(app) -> None:
-    from renderer_pygame import term_enter_alt_screen, term_leave_alt_screen
+    from renderer_gl import term_enter_alt_screen, term_leave_alt_screen
 
     games = app.game_list()
     if not games:

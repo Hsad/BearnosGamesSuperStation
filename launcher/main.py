@@ -12,12 +12,13 @@ from input_handler import (
     load_controllers, open_input_devices, poll_input, advance_combo,
     Action, ActionEvent
 )
-from renderer_pygame import (
+from renderer_gl import (
     get_terminal_size, term_enter_alt_screen, term_leave_alt_screen,
     render, render_boot, render_launching, render_screensaver, flicker_tick,
     clear_scene_cache, warm_next_scene_cache
 )
 from launch_game import launch_game
+from game_creator import run_game_creator
 
 ARCADE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LAUNCHER_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -80,9 +81,13 @@ class App:
         if ev.action == Action.ATTACK:
             games = self.game_list()
             if games:
+                game = games[self.selected]
                 self.state = "LAUNCHING"
-                render_launching(self)
-                launch_game(self)
+                if game.is_creator:
+                    run_game_creator(self)
+                else:
+                    render_launching(self)
+                    launch_game(self)
                 while poll_input(self.fds, self.ctrl, timeout_ms=0):  # drain stale button events
                     pass
                 self.state = "MENU"
@@ -134,7 +139,7 @@ def main():
     app.term_rows, app.term_cols = get_terminal_size()
     mtimes = _source_mtimes() if DEV_MODE else {}
     try:
-        render(app)
+        render_boot(app)
         while True:
             now = time.monotonic()
             if now - app.last_refresh >= RESCAN_INTERVAL:

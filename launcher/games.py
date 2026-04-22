@@ -24,6 +24,7 @@ class Game:
     directory: str
     textcard: str  # empty string if absent
     is_calibrate: bool = False
+    is_creator: bool = False
 
 CALIBRATE_GAME = Game(
     title="Calibrate Controllers",
@@ -34,6 +35,26 @@ CALIBRATE_GAME = Game(
     directory=os.path.expanduser("~/Arcade"),
     textcard=CALIBRATE_TEXTCARD,
     is_calibrate=True,
+)
+
+CREATOR_TEXTCARD = """\
+  ██████╗██████╗ ███████╗ █████╗ ████████╗███████╗
+ ██╔════╝██╔══██╗██╔════╝██╔══██╗╚══██╔══╝██╔════╝
+ ██║     ██████╔╝█████╗  ███████║   ██║   █████╗
+ ██║     ██╔══██╗██╔══╝  ██╔══██║   ██║   ██╔══╝
+ ╚██████╗██║  ██║███████╗██║  ██║   ██║   ███████╗
+  ╚═════╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝  ╚═╝   ╚══════╝
+        ★  DESIGN  YOUR  OWN  GAME  ★        """
+
+CREATOR_GAME = Game(
+    title="Create a Game",
+    description="Design a new arcade game with Claude.",
+    players="1",
+    author="system",
+    slug="_creator",
+    directory=os.path.expanduser("~/Arcade"),
+    textcard=CREATOR_TEXTCARD,
+    is_creator=True,
 )
 
 def scan_games(games_dir: str = GAMES_DIR) -> list[Game]:
@@ -81,4 +102,5 @@ def scan_games(games_dir: str = GAMES_DIR) -> list[Game]:
         ))
 
     games.sort(key=lambda g: g.title.lower())
+    games.append(CREATOR_GAME)
     return games
