@@ -7,5 +7,6 @@
   "generated": true,
   "game_dev_status": "coming_soon",
   "spec_path": "games/_queue/neon-blitz.md",
-  "feedback_code": "nb5m"
+  "feedback_code": "nb5m",
+  "hidden": true
 }

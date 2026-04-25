@@ -16,11 +16,28 @@ C_BOLD    = "\x1b[1m"
 
 # ── Logo ──────────────────────────────────────────────────────────────────────
 KHI_LOGO = [
-    "  ░░▒▒▓▓████████████████████  ██  ██  ██  ██  ██████████████████████▓▓▒▒░░  ",
-    "  ░░▒▒▓▓████████████████████    ████      ██  ██████████████████████▓▓▒▒░░  ",
-    "  ░░▒▒▓▓████████████████████  ██  ██  ██  ██  ██████████████████████▓▓▒▒░░  ",
+    "  ░░▒▒▓▓████████████████████  █▀  ██  ██  ██  ██████████████████████▓▓▒▒░░  ",
+    "  ░░▒▒▓▓████████████████████     ███      ██  ██████████████████████▓▓▒▒░░  ",
+    "  ░░▒▒▓▓████████████████████  █▄  ██  ██  ██  ██████████████████████▓▓▒▒░░  ",
 ]
-SUBTEXT_1 = "                           Bearnos Game Station"
+# Half-block palette for logo editing:
+#   █  U+2588  FULL BLOCK
+#   ▀  U+2580  UPPER HALF BLOCK
+#   ▄  U+2584  LOWER HALF BLOCK
+#   ▌  U+258C  LEFT HALF BLOCK
+#   ▐  U+2590  RIGHT HALF BLOCK
+#   ▖  U+2596  QUADRANT LOWER LEFT
+#   ▗  U+2597  QUADRANT LOWER RIGHT
+#   ▘  U+2598  QUADRANT UPPER LEFT
+#   ▝  U+259D  QUADRANT UPPER RIGHT
+#   ▙  U+2599  QUADRANT UPPER RIGHT AND LOWER LEFT AND LOWER RIGHT missing upper-right
+#   ▚  U+259A  DIAGONAL: upper-left + lower-right
+#   ▛  U+259B  QUADRANT UPPER LEFT AND UPPER RIGHT AND LOWER LEFT
+#   ▜  U+259C  QUADRANT UPPER LEFT AND UPPER RIGHT AND LOWER RIGHT
+#   ▞  U+259E  DIAGONAL: upper-right + lower-left
+#   ▟  U+259F  QUADRANT UPPER RIGHT AND LOWER LEFT AND LOWER RIGHT
+#   ░  U+2591  LIGHT SHADE    ▒  U+2592  MEDIUM SHADE    ▓  U+2593  DARK SHADE
+SUBTEXT_1 = "                          Bearnos Game Station"
 SUBTEXT_2 = "                                  1993 \u2122"
 
 # ── Block font (5×5 glyphs, scaled up at render time) ─────────────────────────

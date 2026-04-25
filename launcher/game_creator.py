@@ -15,7 +15,8 @@ import pygame
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from input_handler import poll_input, Action
-from text_input import TextInput, MODE_MORSE, ALPHA_CHARS as TI_ALPHA_CHARS
+from text_input import (TextInput, MODE_MORSE, ALPHA_CHARS as TI_ALPHA_CHARS,
+                        MORSE_TREE_LINES, MORSE_ICICLE_LINES, MORSE_LEGEND)
 
 ARCADE_DIR    = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 QUEUE_DIR     = os.path.join(ARCADE_DIR, "games", "_queue")
@@ -231,6 +232,26 @@ def _call_claude(messages: list, system_prompt: str, model: str = MODEL_HAIKU) -
 
 # ── Spec file writer ────────────────────────────────────────────────────────────
 
+def _make_feedback_code() -> str:
+    """Return a unique 4-char alphanumeric feedback code not already used by any game."""
+    import random
+    import string
+    chars = string.ascii_lowercase + string.digits
+    used = set()
+    for meta_path in __import__('pathlib').Path(GAMES_DIR).glob("*/meta.json"):
+        try:
+            code = json.loads(meta_path.read_text()).get("feedback_code")
+            if code:
+                used.add(code)
+        except Exception:
+            pass
+    for _ in range(1000):
+        code = "".join(random.choices(chars, k=4))
+        if code not in used:
+            return code
+    return "".join(random.choices(chars, k=6))
+
+
 def _slugify(title: str) -> str:
     s = re.sub(r"[^\w\s-]", "", title.lower())
     s = re.sub(r"[\s_]+", "-", s)
@@ -299,6 +320,8 @@ status: queued
     os.makedirs(game_dir, exist_ok=True)
 
     author = f"{designer} · game-creator" if designer else "game-creator"
+    feedback_code = _make_feedback_code()
+    feedback_url  = f"http://tmnt.starcatcher/{feedback_code}"
     meta = {
         "title":           spec_data.get("title", "Untitled"),
         "description":     spec_data.get("concept", ""),
@@ -308,6 +331,8 @@ status: queued
         "generated":       True,
         "game_dev_status": "coming_soon",
         "spec_path":       os.path.join("games", "_queue", f"{slug}.md"),
+        "feedback_code":   feedback_code,
+        "feedback_url":    feedback_url,
     }
     with open(os.path.join(game_dir, "meta.json"), "w") as f:
         json.dump(meta, f, indent=2)
@@ -488,6 +513,18 @@ def _run_oneshot_build(spec_path: str, slug: str, builder_id: str = "oneshot", m
         dest = os.path.join(GAMES_DIR, slug)
         os.makedirs(dest, exist_ok=True)
 
+        # Save feedback fields before Claude may overwrite meta.json.
+        pre_build_preserve = {}
+        pre_meta = os.path.join(dest, "meta.json")
+        if os.path.exists(pre_meta):
+            try:
+                pre = json.load(open(pre_meta))
+                for key in ("feedback_code", "feedback_url"):
+                    if pre.get(key):
+                        pre_build_preserve[key] = pre[key]
+            except Exception:
+                pass
+
         with open(PROMPT_FILE) as f:
             prompt_template = f.read()
 
@@ -528,6 +565,7 @@ def _run_oneshot_build(spec_path: str, slug: str, builder_id: str = "oneshot", m
         try:
             with open(meta_path) as f:
                 meta = json.load(f)
+            meta.update(pre_build_preserve)
             meta["game_dev_status"] = "ok"
             meta["generated"]       = True
             meta["built_by"]        = model
@@ -550,6 +588,18 @@ def _run_ollama_build(spec_path: str, slug: str, ollama_url: str, model: str, ti
     try:
         dest = os.path.join(GAMES_DIR, slug)
         os.makedirs(dest, exist_ok=True)
+
+        # Save feedback fields before Claude may overwrite meta.json.
+        pre_build_preserve = {}
+        pre_meta = os.path.join(dest, "meta.json")
+        if os.path.exists(pre_meta):
+            try:
+                pre = json.load(open(pre_meta))
+                for key in ("feedback_code", "feedback_url"):
+                    if pre.get(key):
+                        pre_build_preserve[key] = pre[key]
+            except Exception:
+                pass
 
         with open(PROMPT_FILE) as f:
             prompt_template = f.read()
@@ -595,6 +645,7 @@ def _run_ollama_build(spec_path: str, slug: str, ollama_url: str, model: str, ti
         try:
             with open(meta_path) as f:
                 meta = json.load(f)
+            meta.update(pre_build_preserve)
             meta["game_dev_status"] = "ok"
             meta["generated"]       = True
             meta["built_by"]        = model
@@ -726,6 +777,11 @@ def run_game_creator(app) -> None:
     def surf():
         return R._starfield.copy()
 
+    def surf_dark():
+        s = pygame.Surface((R.SCREEN_W, R.SCREEN_H))
+        s.fill(R.COL_BG)
+        return s
+
     def dc(s, text, row, color):
         R._draw_centered(s, text, row, color)
 
@@ -764,9 +820,8 @@ def run_game_creator(app) -> None:
     SCROLL_INTERVAL = 1.0 / 7
     NAME_CHARS      = " ABCDEFGHIJKLMNOPQRSTUVWXYZ"   # space=0, A=1 — matches TI_ALPHA_CHARS
 
-    state       = "LOADING"
-    messages    = [{"role": "user",
-                    "content": "Start the game creator. Ask me the first question."}]
+    state       = "INTRO"
+    messages    = []
     q_num       = 0
     current_q   = None
     sel         = 0
@@ -784,9 +839,13 @@ def run_game_creator(app) -> None:
     name_grace_t  = time.monotonic()
     name_long     = TextInput(max_len=32)
 
+    # Intro / seed state
+    intro_sel  = 0           # 0 = START, 1 = SEED AN IDEA
+    seed_input = TextInput(max_len=64)
+
     # Thread result slot
     _result:   list = [None]
-    _loading:  list = [True]
+    _loading:  list = [False]
     _is_regen: list = [False]   # True when the in-flight call is a regenerate
     _lock = threading.Lock()
 
@@ -822,7 +881,15 @@ def run_game_creator(app) -> None:
                 _loading[0] = False
         threading.Thread(target=worker, daemon=True).start()
 
-    start_api(list(messages))
+    def launch_creator(seed: str = ""):
+        opening = "Start the game creator. Ask me the first question."
+        if seed:
+            opening = (f"Start the game creator. "
+                       f"The player has a rough idea: '{seed}'. "
+                       f"Ask me the first question.")
+        messages.clear()
+        messages.append({"role": "user", "content": opening})
+        start_api(list(messages))
 
     def start_tc_gen(is_regen: bool = False):
         with _tc_lock:
@@ -869,10 +936,17 @@ def run_game_creator(app) -> None:
         events = poll_input(app.fds, app.ctrl, timeout_ms=0)
 
         track_buttons(events)
+        tree_start = 7   # row where the morse tree begins (shared by SEED_INPUT and NAME_LONG)
 
         # In ASKING/LOADING, JUMP+ATTACK force-generates the spec instead of quitting
         if both_held():
-            if state == "ASKING":
+            if state == "INTRO":
+                break
+            elif state == "SEED_INPUT" and seed_input.mode == MODE_MORSE:
+                clear_button_timestamps()
+            elif state == "SEED_INPUT":
+                break
+            elif state == "ASKING":
                 clear_button_timestamps()
                 messages.append({
                     "role": "user",
@@ -900,7 +974,96 @@ def run_game_creator(app) -> None:
             else:
                 break
 
-        if state == "NAME_ENTRY":
+        if state == "INTRO":
+            # ── Intro menu ──────────────────────────────────────────────────
+            s = surf()
+            header(s)
+            dc(s, "GAME  CREATOR", 7, R.COL_CREAM)
+
+            options = ["START", "SEED  AN  IDEA"]
+            mid = rows // 2
+            for i, opt in enumerate(options):
+                row = mid - 1 + i * 2
+                if i == intro_sel:
+                    dc(s, f"[ {opt} ]", row, R.COL_ACCENT)
+                else:
+                    dc(s, f"  {opt}  ", row, R.COL_DIM)
+
+            footer(s, "▲/▼  SELECT   ATTACK=CONFIRM   JUMP+ATTACK=QUIT")
+            finish(s)
+
+            for ev in events:
+                if ev.action in (Action.UP, Action.LEFT):
+                    intro_sel = (intro_sel - 1) % len(options)
+                elif ev.action in (Action.DOWN, Action.RIGHT):
+                    intro_sel = (intro_sel + 1) % len(options)
+                elif ev.action == Action.ATTACK:
+                    if intro_sel == 0:
+                        launch_creator()
+                        state = "LOADING"
+                    else:
+                        seed_input = TextInput(max_len=64)
+                        state = "SEED_INPUT"
+
+        elif state == "SEED_INPUT":
+            # ── Seed idea entry (shares morse rendering with NAME_LONG) ──────
+            s = surf_dark() if seed_input.mode == MODE_MORSE else surf()
+            header(s)
+
+            if seed_input.mode == MODE_MORSE:
+                for i, line in enumerate(MORSE_TREE_LINES):
+                    dc(s, line, tree_start + i, R.COL_DIM)
+
+                seq    = seed_input.morse_seq_str()
+                cur    = seed_input.morse_letter() or "·"
+                dit_l  = seed_input.morse_dit_letter()
+                dash_l = seed_input.morse_dash_letter()
+                state_row = tree_start + len(MORSE_TREE_LINES) + 1
+                dc(s, f"[JUMP ·]→{dit_l}   {seq}  [{cur}]   {dash_l}←[ATTACK —]",
+                   state_row, R.COL_ACCENT)
+
+                icicle_start = state_row + 2
+                dc(s, MORSE_LEGEND, icicle_start, R.COL_SEPIA)
+                for i, line in enumerate(MORSE_ICICLE_LINES):
+                    dc(s, line, icicle_start + 1 + i, R.COL_CREAM)
+
+                footer(s, ". JUMP   _ ATTACK   ► ACCEPT+NEXT   ◄ ACCEPT+BACK   UP HOLD=CONFIRM")
+            else:
+                dc(s, "GAME  CREATOR", 7, R.COL_CREAM)
+                dc(s, "SEED  AN  IDEA", 9, R.COL_DIM)
+                footer(s, "▲/▼  CYCLE   ◄ MORSE MODE   ► ADVANCE   JUMP=CONFIRM   JUMP+ATTACK=BACK")
+
+            buf_row = tree_start + len(MORSE_TREE_LINES) + 2 if seed_input.mode == MODE_MORSE else rows // 2
+            visible = cols - 6
+            chars   = seed_input.chars
+            cur_idx = seed_input.cursor
+            morse_preview = seed_input.morse_letter() if seed_input.mode == MODE_MORSE else ""
+            start   = max(0, cur_idx - visible + 4)
+            line    = ""
+            for i, ci in enumerate(chars[start:start + visible]):
+                ch    = TI_ALPHA_CHARS[ci] if ci < len(TI_ALPHA_CHARS) else " "
+                col_i = start + i
+                if col_i == cur_idx:
+                    line += f"[{morse_preview or ch}]"
+                else:
+                    line += f" {ch} "
+            dc(s, line.strip(), buf_row, R.COL_CREAM)
+            finish(s)
+
+            def _commit_seed():
+                nonlocal state
+                launch_creator(seed=seed_input.text())
+                state = "LOADING"
+
+            if seed_input.tick():
+                _commit_seed()
+            else:
+                for ev in events:
+                    if seed_input.handle_event(ev):
+                        _commit_seed()
+                        break
+
+        elif state == "NAME_ENTRY":
             # ── Name entry frame ────────────────────────────────────────────
             s = surf()
             header(s)
@@ -967,39 +1130,49 @@ def run_game_creator(app) -> None:
                             state = "BUILDER_PICK"
 
         elif state == "NAME_LONG":
-            # ── Full-name / seed entry ───────────────────────────────────────
-            s = surf()
+            # ── Full-name entry ──────────────────────────────────────────────
+            s = surf_dark() if name_long.mode == MODE_MORSE else surf()
             header(s)
-            dc(s, "GAME  CREATOR", 7, R.COL_CREAM)
 
             if name_long.mode == MODE_MORSE:
-                seq = name_long.morse_seq_str()
-                cur = name_long.morse_letter() or "·"
-                dc(s, f"── MORSE ──  {seq}", 9, R.COL_ACCENT)
+                # ── tree ─────────────────────────────────────────────────
+                for i, line in enumerate(MORSE_TREE_LINES):
+                    dc(s, line, tree_start + i, R.COL_DIM)
 
-                mid = rows // 2
+                # ── current morse state ───────────────────────────────────
+                seq    = name_long.morse_seq_str()
+                cur    = name_long.morse_letter() or "·"
                 dit_l  = name_long.morse_dit_letter()
                 dash_l = name_long.morse_dash_letter()
-                dc(s, f"[ATTACK ·] → {dit_l}     [ {cur} ]     {dash_l} ← [JUMP —]",
-                   mid, R.COL_CREAM)
+                state_row = tree_start + len(MORSE_TREE_LINES) + 1
+                dc(s, f"[JUMP ·]→{dit_l}   {seq}  [{cur}]   {dash_l}←[ATTACK —]",
+                   state_row, R.COL_ACCENT)
 
-                footer(s, "·=ATTACK   —=JUMP   ► ACCEPT+NEXT   ◄ ACCEPT+BACK   UP HOLD=DONE")
+                # ── icicles ───────────────────────────────────────────────
+                icicle_start = state_row + 2
+                dc(s, MORSE_LEGEND, icicle_start, R.COL_SEPIA)
+                for i, line in enumerate(MORSE_ICICLE_LINES):
+                    dc(s, line, icicle_start + 1 + i, R.COL_CREAM)
+
+                footer(s, ". JUMP   _ ATTACK   ► ACCEPT+NEXT   ◄ ACCEPT+BACK   UP HOLD=DONE")
             else:
+                dc(s, "GAME  CREATOR", 7, R.COL_CREAM)
                 dc(s, "FULL  NAME", 9, R.COL_DIM)
                 footer(s, "▲/▼  CYCLE   ◄ MORSE MODE   ► ADVANCE   JUMP=DONE   JUMP+ATTACK=3-CHAR")
 
-            # Draw text buffer
-            buf_row  = rows // 2 - 3 if name_long.mode == MODE_MORSE else rows // 2
+            # Draw text buffer (between state row and icicles in morse mode)
+            buf_row  = tree_start + len(MORSE_TREE_LINES) + 2 if name_long.mode == MODE_MORSE else rows // 2
             visible  = cols - 6
             chars    = name_long.chars
             cur_idx  = name_long.cursor
+            morse_preview = name_long.morse_letter() if name_long.mode == MODE_MORSE else ""
             start    = max(0, cur_idx - visible + 4)
             line     = ""
             for i, ci in enumerate(chars[start:start + visible]):
                 ch   = TI_ALPHA_CHARS[ci] if ci < len(TI_ALPHA_CHARS) else " "
                 col_i = start + i
                 if col_i == cur_idx:
-                    line += f"[{ch}]"
+                    line += f"[{morse_preview or ch}]"
                 else:
                     line += f" {ch} "
             dc(s, line.strip(), buf_row, R.COL_CREAM)

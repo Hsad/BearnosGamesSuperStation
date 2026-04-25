@@ -61,20 +61,7 @@ def _make_menu_items(game) -> list:
     ]
     return items
 
-def _make_feedback_lines(game) -> list[str]:
-    code = _feedback_code(game)
-    if not code:
-        return ["[No feedback code configured]"]
-    url = f"http://tmnt.starcatcher/{code}"
-    try:
-        import qrcode as _qr
-        qr = _qr.QRCode(error_correction=_qr.constants.ERROR_CORRECT_L, border=2)
-        qr.add_data(url)
-        qr.make(fit=True)
-        matrix = qr.get_matrix()
-    except Exception as e:
-        return [url, f"[QR error: {e}]"]
-
+def _matrix_to_halfblock(matrix: list) -> list[str]:
     lines = []
     n = len(matrix)
     for row_i in range(0, n, 2):
@@ -83,15 +70,63 @@ def _make_feedback_lines(game) -> list[str]:
         line = ""
         for t, b in zip(top, bot):
             if t and b:
-                line += "██"
+                line += "█"
             elif t:
-                line += "▀▀"
+                line += "▀"
             elif b:
-                line += "▄▄"
+                line += "▄"
             else:
-                line += "  "
+                line += " "
         lines.append(line)
     return lines
+
+def _make_datamatrix_lines(game) -> list[str]:
+    code = _feedback_code(game)
+    if not code:
+        return ["[No feedback code configured]"]
+    url = f"http://tmnt.starcatcher/{code}"
+    try:
+        import sys, types
+        if "distutils" not in sys.modules:
+            _dist = types.ModuleType("distutils")
+            _ver  = types.ModuleType("distutils.version")
+            class _LV:
+                def __init__(self, s): pass
+                def __lt__(self, o): return False
+                def __ge__(self, o): return True
+            _ver.LooseVersion = _LV
+            _dist.version = _ver
+            sys.modules["distutils"]         = _dist
+            sys.modules["distutils.version"] = _ver
+        from pylibdmtx.pylibdmtx import encode as dm_encode
+        from PIL import Image
+        MODULE_SIZE = 5  # pylibdmtx default
+        encoded = dm_encode(url.encode())
+        img     = Image.frombytes("RGB", (encoded.width, encoded.height), encoded.pixels)
+        modules_w = encoded.width  // MODULE_SIZE
+        modules_h = encoded.height // MODULE_SIZE
+        img     = img.resize((modules_w, modules_h), Image.NEAREST).convert("1")
+        matrix  = [[not img.getpixel((x, y)) for x in range(img.width)]
+                   for y in range(img.height)]
+        return _matrix_to_halfblock(matrix)
+    except ImportError:
+        return ["[install python3-pylibdmtx]"]
+    except Exception as e:
+        return [f"[Data Matrix error: {e}]"]
+
+def _make_qr_lines(game) -> list[str]:
+    code = _feedback_code(game)
+    if not code:
+        return ["[No feedback code configured]"]
+    url = f"http://tmnt.starcatcher/{code}"
+    try:
+        import qrcode as _qr
+        qr = _qr.QRCode(border=4)
+        qr.add_data(url)
+        qr.make(fit=True)
+        return _matrix_to_halfblock(qr.get_matrix())
+    except Exception as e:
+        return [f"[QR error: {e}]"]
 
 def _read_spec_lines(game, cols: int) -> list[str]:
     meta_path = os.path.join(game.directory, "meta.json")
@@ -183,9 +218,11 @@ def run_game_editor(app, game) -> None:
     scroll         = 0
     last_scroll_t  = 0.0
     INPUT_GRACE    = 0.35
-    spec_lines     = _read_spec_lines(game, cols)
-    feedback_lines = _make_feedback_lines(game)
-    menu_items     = _make_menu_items(game)
+    spec_lines       = _read_spec_lines(game, cols)
+    dm_lines         = _make_datamatrix_lines(game)
+    qr_lines         = _make_qr_lines(game)
+    feedback_showing = "dm"
+    menu_items       = _make_menu_items(game)
 
     builders        = _load_builders()
     builder_sel     = [0]
@@ -327,22 +364,38 @@ def run_game_editor(app, game) -> None:
                     scroll = 0
 
         elif state == "FEEDBACK":
-            s = surf()
+            s    = surf()
+            code = _feedback_code(game)
+            url  = f"http://tmnt.starcatcher/{code}"
+
+            if feedback_showing == "dm":
+                active_lines = dm_lines
+                mode_label   = "DATA MATRIX"
+                hint         = "ATTACK=SHOW QR   JUMP=BACK   JUMP+ATTACK=EXIT"
+            else:
+                active_lines = qr_lines
+                mode_label   = "QR CODE"
+                hint         = "ATTACK=SHOW DATA MATRIX   JUMP=BACK   JUMP+ATTACK=EXIT"
+
             header(s)
-            dc(s, f"GIVE FEEDBACK  —  {game.title.upper()}", 7, R.COL_CREAM)
-            dc(s, f"http://tmnt.starcatcher/{_feedback_code(game)}", 9, R.COL_ACCENT)
+            dc(s, game.title.upper(), 7, R.COL_CREAM)
+            dc(s, url, 9, R.COL_ACCENT)
+            dc(s, mode_label, 11, R.COL_DIM)
 
-            qr_start = 11
-            for i, line in enumerate(feedback_lines):
-                dc(s, line, qr_start + i, R.COL_CREAM)
+            code_start = 13
+            for i, line in enumerate(active_lines):
+                dc(s, line, code_start + i, R.COL_CREAM)
 
-            footer(s, "JUMP=BACK   JUMP+ATTACK=EXIT")
+            footer(s, hint)
             finish(s)
 
             for ev in events:
-                if ev.action == Action.JUMP:
-                    state = "EDIT_MENU"
-                    sel   = 0
+                if ev.action == Action.ATTACK:
+                    feedback_showing = "qr" if feedback_showing == "dm" else "dm"
+                elif ev.action == Action.JUMP:
+                    state            = "EDIT_MENU"
+                    sel              = 0
+                    feedback_showing = "dm"
 
         elif state == "BUILDER_PICK":
             selected_bid  = builders[builder_sel[0]].get("id", "") if builders else ""

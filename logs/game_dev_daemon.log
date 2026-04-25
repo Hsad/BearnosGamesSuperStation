@@ -120,3 +120,23 @@ scp: Connection closed
 2026-04-25 22:24:11,648  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/abyss-runner.md', 'arcade@spark.local:/tmp/abyss-runner.md']' returned non-zero exit status 255.
 2026-04-25 22:24:11,661  ERROR    Build failed for: abyss-runner
 2026-04-25 22:24:11,661  ERROR    Build failed for: abyss-runner
+2026-04-25 23:39:42,627  INFO     Processing spec: crypt-keeper
+2026-04-25 23:39:42,627  INFO     Processing spec: crypt-keeper
+2026-04-25 23:39:42,635  INFO     Copying spec to arcade@spark.local:/tmp/crypt-keeper.md
+2026-04-25 23:39:42,635  INFO     Copying spec to arcade@spark.local:/tmp/crypt-keeper.md
+ssh: Could not resolve hostname spark.local: Name or service not known
+scp: Connection closed
+2026-04-25 23:39:47,786  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/crypt-keeper.md', 'arcade@spark.local:/tmp/crypt-keeper.md']' returned non-zero exit status 255.
+2026-04-25 23:39:47,786  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/crypt-keeper.md', 'arcade@spark.local:/tmp/crypt-keeper.md']' returned non-zero exit status 255.
+2026-04-25 23:39:47,787  ERROR    Build failed for: crypt-keeper
+2026-04-25 23:39:47,787  ERROR    Build failed for: crypt-keeper
+2026-04-26 00:13:48,238  INFO     Processing spec: space-command
+2026-04-26 00:13:48,238  INFO     Processing spec: space-command
+2026-04-26 00:13:48,250  INFO     Copying spec to arcade@spark.local:/tmp/space-command.md
+2026-04-26 00:13:48,250  INFO     Copying spec to arcade@spark.local:/tmp/space-command.md
+ssh: Could not resolve hostname spark.local: Name or service not known
+scp: Connection closed
+2026-04-26 00:13:53,431  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/space-command.md', 'arcade@spark.local:/tmp/space-command.md']' returned non-zero exit status 255.
+2026-04-26 00:13:53,431  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/space-command.md', 'arcade@spark.local:/tmp/space-command.md']' returned non-zero exit status 255.
+2026-04-26 00:13:53,434  ERROR    Build failed for: space-command
+2026-04-26 00:13:53,434  ERROR    Build failed for: space-command

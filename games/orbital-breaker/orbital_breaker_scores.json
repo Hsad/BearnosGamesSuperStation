@@ -1,6 +1,12 @@
 {
   "solo": [
     {
+      "name": "DAK",
+      "money": 98,
+      "bricks": 94,
+      "time": "01:09"
+    },
+    {
       "name": "ABA",
       "money": 34,
       "bricks": 31,
@@ -29,12 +35,6 @@
       "money": 2,
       "bricks": 2,
       "time": "00:11"
-    },
-    {
-      "name": "DAK",
-      "money": 2,
-      "bricks": 2,
-      "time": "00:12"
     }
   ],
   "team": [

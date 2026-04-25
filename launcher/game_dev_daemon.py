@@ -97,6 +97,18 @@ def _dispatch_local(spec_path: str, config: dict) -> bool:
         dest = os.path.join(GAMES_DIR, slug)
         os.makedirs(dest, exist_ok=True)
 
+        # Preserve fields written by game_creator before the build (e.g. feedback_code).
+        pre_build_preserve = {}
+        pre_meta_path = os.path.join(dest, "meta.json")
+        if os.path.exists(pre_meta_path):
+            try:
+                pre = json.loads(open(pre_meta_path).read())
+                for key in ("feedback_code", "feedback_url"):
+                    if pre.get(key):
+                        pre_build_preserve[key] = pre[key]
+            except Exception:
+                pass
+
         with open(spec_path) as f:
             spec_text = f.read()
 
@@ -140,8 +152,22 @@ Write all files now. Do not explain, just write the code."""
             log.error("Agent finished but files missing: %s", missing)
             return False
 
-        # Make launch.sh executable
         os.chmod(os.path.join(dest, "launch.sh"), 0o755)
+
+        # Merge preserved fields (feedback_code etc.) back into whatever meta.json
+        # the build agent wrote, and stamp game_dev_status/generated.
+        meta_path = os.path.join(dest, "meta.json")
+        try:
+            with open(meta_path) as f:
+                built_meta = json.load(f)
+            built_meta.update(pre_build_preserve)
+            built_meta.setdefault("game_dev_status", "ok")
+            built_meta.setdefault("generated", True)
+            with open(meta_path, "w") as f:
+                json.dump(built_meta, f, indent=2)
+        except Exception as e:
+            log.warning("Could not update meta.json for %s: %s", slug, e)
+
         log.info("Local build succeeded for %s", slug)
         return True
 
@@ -167,6 +193,19 @@ def _dispatch_ssh(spec_path: str, config: dict) -> bool:
     meta = _parse_frontmatter(open(spec_path).read())
     slug = meta.get("slug", os.path.splitext(os.path.basename(spec_path))[0])
     remote_spec = f"/tmp/{os.path.basename(spec_path)}"
+    local_dest  = os.path.join(GAMES_DIR, slug)
+
+    # Preserve feedback fields written before the build; SCP will overwrite meta.json.
+    pre_build_preserve = {}
+    pre_meta_path = os.path.join(local_dest, "meta.json")
+    if os.path.exists(pre_meta_path):
+        try:
+            pre = json.loads(open(pre_meta_path).read())
+            for key in ("feedback_code", "feedback_url"):
+                if pre.get(key):
+                    pre_build_preserve[key] = pre[key]
+        except Exception:
+            pass
 
     try:
         log.info("Copying spec to %s:%s", target, remote_spec)
@@ -183,7 +222,6 @@ def _dispatch_ssh(spec_path: str, config: dict) -> bool:
         )
 
         remote_result = f"{pickup.rstrip('/')}/{slug}/"
-        local_dest    = os.path.join(GAMES_DIR, slug)
         log.info("Copying result from %s:%s", target, remote_result)
         subprocess.run(
             ["scp", "-r", "-o", "StrictHostKeyChecking=no",
@@ -194,6 +232,18 @@ def _dispatch_ssh(spec_path: str, config: dict) -> bool:
         launch_sh = os.path.join(local_dest, "launch.sh")
         if os.path.exists(launch_sh):
             os.chmod(launch_sh, 0o755)
+
+        # Merge preserved feedback fields back after SCP overwrote meta.json.
+        if pre_build_preserve:
+            meta_path = os.path.join(local_dest, "meta.json")
+            try:
+                with open(meta_path) as f:
+                    built_meta = json.load(f)
+                built_meta.update(pre_build_preserve)
+                with open(meta_path, "w") as f:
+                    json.dump(built_meta, f, indent=2)
+            except Exception as e:
+                log.warning("Could not restore feedback fields in %s: %s", meta_path, e)
 
         log.info("SSH build succeeded for %s", slug)
         return True

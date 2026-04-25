@@ -1,0 +1,10 @@
+{
+  "title": "Crypt Keeper",
+  "description": "A spooky pixel-art dungeon where 1-4 players survive endless waves of enemies in a single arena. Use tactical movement and two distinct attack types (JUMP for area-clear, ATTACK for directional strike) to fend off increasingly difficult hordes. Score is determined by waves survived and enemies defeated.",
+  "players": "1-4",
+  "author": "claude",
+  "added": "2026-04-25",
+  "generated": true,
+  "game_dev_status": "ok",
+  "hidden": true
+}

@@ -3,7 +3,7 @@
 
 Alpha mode : UP/DOWN cycle A-Z + space, LEFT/RIGHT move cursor,
              LEFT at col 0 switches to morse, JUMP submits.
-Morse mode : ATTACK = dit (·), JUMP = dash (—) navigate the tree;
+Morse mode : JUMP = dit (·), ATTACK = dash (—) navigate the tree;
              RIGHT accepts current letter and advances,
              LEFT accepts and retreats (at col 0 → back to alpha),
              UP held for HOLD_SUBMIT seconds submits.
@@ -30,7 +30,30 @@ MORSE_TREE = _n(None,
 MODE_ALPHA = "alpha"
 MODE_MORSE = "morse"
 
-HOLD_SUBMIT = 0.7   # seconds UP must be held to submit
+HOLD_SUBMIT = 1.5   # seconds UP must be held to submit
+
+# ── Reference display lines ────────────────────────────────────────────────
+
+MORSE_TREE_LINES = [
+    "                    .                                              _",
+    "                   /E\\                                            /T\\",
+    "            .                _                        .                         _",
+    "           /I\\              /A\\                      /N\\                       /M\\",
+    "     .             _      .      _             .             _             .          _",
+    "    /S\\           /U     /R     /W\\           /D\\           /K\\           /G\\         O",
+    "  .      _      .      .      .      _      .      _      .      _      .      _",
+    "  H      V      F      L      P      J      B      X      C      Y      Z      Q",
+]
+
+MORSE_LEGEND = ". = dit  JUMP button      _ = dash  ATTACK button"
+
+MORSE_ICICLE_LINES = [
+    "  A  B  C  D  E  F  G  H  I  J  K  L  M  N  O  P  Q  R  S  T  U  V  W  X  Y  Z",
+    "  .  _  _  _  .  .  _  .  .  .  _  .  _  _  _  .  _  .  .  _  .  .  .  _  _  _",
+    "  _  .  .  .     .  _  .  .  _  .  _  _  .  _  _  _  _  .     .  .  _  .  .  _",
+    "     .  _  .     _  .  .     _  _  .        _  _  .  .  .     _  .  _  .  _  .",
+    "     .  .        .     .     _     .           .  _              _     _  _  .",
+]
 
 
 class TextInput:
@@ -76,11 +99,10 @@ class TextInput:
         return self._morse(ev)
 
     def tick(self) -> bool:
-        """Call every frame. Returns True when UP hold threshold is reached."""
-        if self._up_t and time.monotonic() - self._up_t >= HOLD_SUBMIT:
+        """Call every frame. Returns True when UP hold threshold is reached (morse mode only)."""
+        if self.mode == MODE_MORSE and self._up_t and time.monotonic() - self._up_t >= HOLD_SUBMIT:
             self._up_t = 0.0
-            if self.mode == MODE_MORSE:
-                self._morse_accept()
+            self._morse_accept()
             return True
         return False
 
@@ -88,8 +110,6 @@ class TextInput:
 
     def _alpha(self, ev) -> bool:
         if ev.action == Action.UP:
-            if not self._up_t:
-                self._up_t = time.monotonic()
             self.chars[self.cursor] = (self.chars[self.cursor] - 1) % len(ALPHA_CHARS)
         elif ev.action == Action.DOWN:
             self._up_t = 0.0
@@ -113,12 +133,12 @@ class TextInput:
     # ── morse ─────────────────────────────────────────────────────────────
 
     def _morse(self, ev) -> bool:
-        if ev.action == Action.ATTACK:        # dit ·
+        if ev.action == Action.JUMP:          # dit ·
             self._up_t = 0.0
             if self._mnode[1] is not None:
                 self._mnode = self._mnode[1]
                 self._mseq.append('·')
-        elif ev.action == Action.JUMP:        # dash —
+        elif ev.action == Action.ATTACK:      # dash —
             self._up_t = 0.0
             if self._mnode[2] is not None:
                 self._mnode = self._mnode[2]

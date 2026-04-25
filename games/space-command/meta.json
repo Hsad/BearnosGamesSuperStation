@@ -1,0 +1,11 @@
+{
+  "title": "SPACE COMMAND",
+  "description": "Four players command sector fleets in a split-screen cooperative campaign. Each player controls one quadrant of the battlefield. Pause mid-battle to queue group movement orders (all units in your sector move forward, hold, or defend), then execute in real-time while enemies advance. Complete objectives, unlock new ship types, and reinforce endangered teammates across a multi-mission campaign.",
+  "players": "1-4",
+  "author": "DAK \u00b7 game-creator",
+  "added": "2026-04-26",
+  "generated": true,
+  "game_dev_status": "coming_soon",
+  "spec_path": "games/_queue/space-command.md",
+  "hidden": true
+}
