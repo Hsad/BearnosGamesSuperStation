@@ -50,7 +50,13 @@ BALL_SMASH     = 1.55                  # speed multiplier on button hit
 BALL_MAX_SPD   = 260
 
 PLAYER_HW      = 10                   # satellite half-width  (radial,     20px total)
-PLAYER_HH      = 30                   # satellite half-height (tangential, 60px total)
+PLAYER_HH      = 45                   # satellite half-height (tangential, 90px total)
+
+ORBIT_DECAY    = 15                   # px/s — orbit drifts back toward PLAYER_MIN_R
+ROCKET_VEL     = 300                  # px/s added per burst
+ROCKET_VEL_MAX = 380                  # cap on stacked radial velocity
+ROCKET_DRAG    = 600                  # px/s² — drag that bleeds off rocket velocity
+ROCKET_CD      = 0.30                 # seconds between bursts
 
 BALL_LIVES     = 3                     # shared lives pool
 
@@ -459,7 +465,9 @@ class Player:
         self.alive   = True
         self.deaths  = 0
         self.bricks_hit = 0
-        self._hit_cd = 0.0
+        self._hit_cd    = 0.0
+        self._rocket_cd = 0.0
+        self._radial_vel = 0.0
 
     def respawn_cost(self):
         idx = min(self.deaths, len(RESPAWN_COSTS)-1)
@@ -469,7 +477,7 @@ class Player:
         r = self.cur_r if self.transit else self.radius
         return polar(self.angle, r)
 
-    def update(self, dt, inp):
+    def update(self, dt, inp, particles=None):
         if not self.alive:
             return
         if self.transit:
@@ -478,7 +486,8 @@ class Player:
                 self.transit = False
             return
 
-        self._hit_cd = max(0, self._hit_cd - dt)
+        self._hit_cd    = max(0, self._hit_cd - dt)
+        self._rocket_cd = max(0, self._rocket_cd - dt)
 
         if inp.held(self.pid,"LEFT"):
             self.angle += PLAYER_ANG_SPD * dt
@@ -488,6 +497,29 @@ class Player:
             self.radius = min(PLAYER_MAX_R, self.radius + PLAYER_RAD_SPD*dt)
         if inp.held(self.pid,"DOWN"):
             self.radius = max(PLAYER_MIN_R, self.radius - PLAYER_RAD_SPD*dt)
+
+        # rocket burst: button press injects outward velocity
+        if self._rocket_cd <= 0 and (inp.just(self.pid,"ATTACK") or inp.just(self.pid,"JUMP")):
+            self._radial_vel = min(ROCKET_VEL_MAX, self._radial_vel + ROCKET_VEL)
+            self._rocket_cd  = ROCKET_CD
+            if particles is not None:
+                px, py = self.pos()
+                for _ in range(10):
+                    p = Particle(px, py, (255, random.randint(100, 180), 20))
+                    spread = random.uniform(-0.6, 0.6)
+                    spd    = random.uniform(90, 220)
+                    pa     = self.angle + math.pi + spread
+                    p.vx   = math.cos(pa) * spd
+                    p.vy   = math.sin(pa) * spd
+                    particles.append(p)
+
+        # apply rocket velocity then bleed it off with drag
+        if self._radial_vel > 0:
+            self.radius      = min(PLAYER_MAX_R, self.radius + self._radial_vel * dt)
+            self._radial_vel = max(0.0, self._radial_vel - ROCKET_DRAG * dt)
+
+        # orbit decays back toward minimum once rocket velocity is spent
+        self.radius = max(PLAYER_MIN_R, self.radius - ORBIT_DECAY * dt)
 
     def _in_hitbox(self, wx, wy, margin=0):
         px, py = self.pos()
@@ -512,7 +544,7 @@ class Player:
         # Breakout-style: tangential hit position drives deflection angle.
         # Ball always goes inward (toward earth) after the hit.
         t   = max(-1.0, min(1.0, ly / PLAYER_HH))   # -1 .. +1 across paddle
-        ang = t * math.radians(65)                   # max 65° from radial
+        ang = t * math.radians(30)                   # max 30° from radial → 60° total cone
         spd = math.hypot(ball.vx, ball.vy)
 
         # New velocity in local space: inward radial + tangential bias
@@ -553,8 +585,10 @@ class Player:
         self.radius   = float(PLAYER_MIN_R)
         self.cur_r    = float(EARTH_R + 2)
         self.transit  = True
-        self.alive    = True
-        self._hit_cd  = 0.0
+        self.alive       = True
+        self._hit_cd     = 0.0
+        self._rocket_cd  = 0.0
+        self._radial_vel = 0.0
 
     def draw(self, surf):
         if not self.alive:
@@ -834,7 +868,7 @@ class Game:
 
         # update players
         for p in self.players.values():
-            p.update(dt, self.inp)
+            p.update(dt, self.inp, self.particles)
 
         # update balls + collisions
         dead_balls = []
@@ -855,10 +889,13 @@ class Game:
                         continue
                     bx, by = polar(brick.orbit_angle, ring.radius)
                     if dist2(ball.x, ball.y, bx, by) < (BALL_R + BRICK_COL_R)**2:
-                        # laser beam
-                        self.lasers.append(Laser(
-                            ball.owner_x, ball.owner_y, bx, by,
-                            ball.color))
+                        # laser beam from current owner satellite position to brick
+                        owner = self.players.get(ball.owner_pid)
+                        if owner and owner.alive:
+                            ox, oy = owner.pos()
+                        else:
+                            ox, oy = ball.owner_x, ball.owner_y
+                        self.lasers.append(Laser(ox, oy, bx, by, ball.color))
 
                         destroyed = brick.hit()
                         ball.bounces += 1

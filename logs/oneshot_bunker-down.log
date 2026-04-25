@@ -1,0 +1,11 @@
+All three files are written and syntax-checks pass. Here's what was built:
+
+**`bunker_down.py`** (~540 lines) — complete game with:
+- Pre-rendered 2400×1728 tile map with road cross and bunker structure, scrolling camera tracks player
+- 4 trap types: Spike Pit (instant kill, 1-use), Flame Barrel (8s burn zone), Electric Fence (slows + damages, degrades), Auto-Turret (fires bullets, has HP)
+- Zombie waves with escalating speed/HP every wave; boss zombies every 5th wave
+- Timed scavenge phase between waves with scrap bonus
+- Darkly humorous wave title cards, kill quips, and death screen epitaphs
+- Full HUD: bunker HP bar, scrap counter, trap selector with cost indicators, wave/kill counters
+- Tile placement preview (green/red) under player's feet; JUMP cycles traps, ATTACK places
+- All quit conventions: attract/game-over single-player hold, in-play two-player 5s hold with red bar

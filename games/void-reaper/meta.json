@@ -1,0 +1,12 @@
+{
+  "title": "Void Reaper",
+  "description": "Four pilots trapped in a derelict asteroid field fight to the death. Ships fire a single forward laser and can snap 180° to punish anyone on their tail. The galaxy is cold, silent, and unforgiving — only kill count survives the verdict when the clock hits zero.",
+  "players": "1-4",
+  "author": "game-creator",
+  "added": "2026-04-23",
+  "generated": true,
+  "game_dev_status": "coming_soon",
+  "spec_path": "games/_queue/void-reaper.md",
+  "hidden": true,
+  "feedback_code": "vd7k"
+}

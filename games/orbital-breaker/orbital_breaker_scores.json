@@ -1,6 +1,18 @@
 {
   "solo": [
     {
+      "name": "ABA",
+      "money": 34,
+      "bricks": 31,
+      "time": "00:56"
+    },
+    {
+      "name": "AAB",
+      "money": 12,
+      "bricks": 12,
+      "time": "00:41"
+    },
+    {
       "name": "AAA",
       "money": 6,
       "bricks": 6,
@@ -23,13 +35,17 @@
       "money": 2,
       "bricks": 2,
       "time": "00:12"
-    },
-    {
-      "name": "AAA",
-      "money": 1,
-      "bricks": 1,
-      "time": "00:07"
     }
   ],
-  "team": []
+  "team": [
+    {
+      "name": "BAD",
+      "money": 11,
+      "bricks": 11,
+      "time": "00:29",
+      "names": [
+        "BAD"
+      ]
+    }
+  ]
 }

@@ -1,0 +1,5 @@
+LD_LIBRARY_PATH="$HOME/.local/lib" MESA_GL_VERSION_OVERRIDE=3.3 MESA_GLSL_VERSION_OVERRIDE=330 python3 ~/Arcade/launcher/main.py
+
+# on/off
+sudo ddcutil setvcp D6 4
+sudo ddcutil setvcp D6 1

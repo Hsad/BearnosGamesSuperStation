@@ -1,0 +1,16 @@
+All three files are written and `launch.sh` is executable. Here's what was generated:
+
+**`games/swarm-command/swarm_command.py`** — ~530 lines, fully playable:
+
+| Player | Role | Controls |
+|---|---|---|
+| P1 (blue) | **PILOT** | Joystick moves ship · JUMP = evasion dash (invincible during) |
+| P2 (yellow) | **WEAPONS** | Joystick aims reticle · ATTACK fires · aim shown on-screen |
+| P3 (purple) | **SHIELDS** | Joystick points 110° arc · JUMP raises shield (blocks damage from that arc, 3 charges, auto-recharges) |
+| P4 (red) | **ENGINES** | UP/DOWN taps throttle 1–5 (affects ship speed) · ATTACK = overdrive burst |
+
+**8 waves** of escalating alien insects (drones → beetles → shooters → hornets), then a **boss mothership** with 4 destructible tentacle arms — destroy all arms to expose the core, then blast the core to win.
+
+Power-ups drop randomly from enemies: shield recharge, weapon boost, engine overdrive, hull repair.
+
+**Quit rules** match the spec: attract/game-over = any player holds ATTACK+JUMP; during play = two players hold ATTACK+JUMP for 5 seconds (red progress bar shown).

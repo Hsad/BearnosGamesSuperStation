@@ -1,0 +1,12 @@
+{
+  "title": "Ice Clash",
+  "description": "A tense 2v2 retro ice hockey game on a single screen rink. Two teams of two skaters battle to score 5 goals first. Players pass by skating near teammates with the puck, shoot with ATTACK, and burn a cooldown dash with JUMP. Pure arcade hockey — no power-ups, just raw competition.",
+  "players": "4",
+  "author": "game-creator",
+  "added": "2026-04-25",
+  "generated": true,
+  "game_dev_status": "coming_soon",
+  "spec_path": "games/_queue/ice-clash.md",
+  "hidden": true,
+  "feedback_code": "ic9w"
+}

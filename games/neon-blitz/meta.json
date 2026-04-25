@@ -1,0 +1,11 @@
+{
+  "title": "Neon Blitz",
+  "description": "Two teams of two players race hovercrafts through a looping neon cyberpunk circuit, building combo multipliers by chaining gates, drafting, and ramming rivals. Every risky move can spike your score—or wreck your run.",
+  "players": "4",
+  "author": "game-creator",
+  "added": "2026-04-25",
+  "generated": true,
+  "game_dev_status": "coming_soon",
+  "spec_path": "games/_queue/neon-blitz.md",
+  "feedback_code": "nb5m"
+}

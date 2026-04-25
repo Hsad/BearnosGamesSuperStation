@@ -25,6 +25,8 @@ class Game:
     textcard: str  # empty string if absent
     is_calibrate: bool = False
     is_creator: bool = False
+    generated: bool = False
+    game_dev_status: str = ""  # "coming_soon" | "" (live)
 
 CALIBRATE_GAME = Game(
     title="Calibrate Controllers",
@@ -99,6 +101,8 @@ def scan_games(games_dir: str = GAMES_DIR) -> list[Game]:
             slug=slug,
             directory=game_dir,
             textcard=textcard,
+            generated=bool(meta.get("generated", False)),
+            game_dev_status=meta.get("game_dev_status", ""),
         ))
 
     games.sort(key=lambda g: g.title.lower())

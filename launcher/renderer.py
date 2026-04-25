@@ -107,10 +107,12 @@ def _move(row: int, col: int) -> str:
     return f"\x1b[{row};{col}H"
 
 def _star_char(row: int, col: int) -> str:
-    h = (row * 7919 + col * 3571) % 100
-    if h >= 4:
-        return " "
-    return ['.', '*', '+', '·'][h % 4]
+    h = (row * 2654435761 + col * 2246822519) & 0xFFFF_FFFF
+    h = ((h ^ (h >> 16)) * 0x45d9f3b) & 0xFFFF_FFFF
+    h ^= h >> 15
+    if h % 100 >= 5:
+        return ' '
+    return '·····....*+'[h % 11]
 
 def _center(text: str, width: int) -> str:
     text_len = len(text)

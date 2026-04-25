@@ -1,0 +1,19 @@
+ * Serving Flask app 'feedback_server'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:80
+ * Running on http://192.168.1.144:80
+[33mPress CTRL+C to quit[0m
+192.168.1.50 - - [25/Apr/2026 22:32:54] "GET / HTTP/1.1" 200 -
+192.168.1.50 - - [25/Apr/2026 22:32:54] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+192.168.1.50 - - [25/Apr/2026 22:32:57] "GET /tr2n HTTP/1.1" 200 -
+192.168.1.50 - - [25/Apr/2026 22:33:04] "GET /tr2n/feature HTTP/1.1" 200 -
+192.168.1.50 - - [25/Apr/2026 22:33:18] "POST /tr2n/submit HTTP/1.1" 200 -
+192.168.1.50 - - [25/Apr/2026 22:33:21] "GET /tr2n HTTP/1.1" 200 -
+192.168.1.50 - - [25/Apr/2026 22:34:00] "[33mGET /gr/tr2n.png HTTP/1.1[0m" 404 -
+192.168.1.50 - - [25/Apr/2026 22:34:14] "GET /qr/tr2n.png HTTP/1.1" 200 -
+192.168.1.50 - - [25/Apr/2026 22:43:05] "GET /qr/nb5m.png HTTP/1.1" 200 -
+192.168.1.226 - - [25/Apr/2026 22:44:08] "GET /nb5m HTTP/1.1" 200 -
+192.168.1.226 - - [25/Apr/2026 22:44:09] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+192.168.1.226 - - [25/Apr/2026 22:44:12] "GET /nb5m HTTP/1.1" 200 -

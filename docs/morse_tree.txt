@@ -1,0 +1,43 @@
+MORSE CODE TREE  —  cabinet reference
+======================================
+  ATTACK = dit  (·)    JUMP = dash  (—)
+  Left branch always = dit   Right branch always = dash
+
+  RIGHT  — accept current letter, advance to next position
+  LEFT   — accept and go back  (at start: switch to alpha mode)
+  UP hold 0.7s — submit entire text
+
+
+                                               START
+                                     /                       \
+                         E                                               T
+                   /           \                                   /           \
+                 I               A                       N               M
+               /     \         /     \               /     \         /     \
+             S         U     R         W           D         K     G         O
+             /  \       /           /  \         /  \       /  \   /  \
+            H   V     F     L         P   J       B   X     C   Y   Z   Q
+
+
+  Gaps (U right, R right, O left/right) have no standard letter.
+
+
+Quick reference:
+  A  ·—      N  —·
+  B  —···    O  ———
+  C  —·—·    P  ·——·
+  D  —··     Q  ——·—
+  E  ·       R  ·—·
+  F  ··—·    S  ···
+  G  ——·     T  —
+  H  ····    U  ··—
+  I  ··      V  ···—
+  J  ·———    W  ·——
+  K  —·—     X  —··—
+  L  ·—··    Y  —·——
+  M  ——      Z  ——··
+
+Example — to type  A  (·—):
+  press ATTACK (·) → lands on E
+  press JUMP   (—) → lands on A
+  press RIGHT  to accept A and move to next position

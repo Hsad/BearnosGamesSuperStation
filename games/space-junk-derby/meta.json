@@ -1,0 +1,12 @@
+{
+  "title": "Space Junk Derby",
+  "description": "2–4 players race absurd vehicles (a rocket-boosted office chair, a jet-powered shopping cart, a thruster bathtub, and a turbo fridge) around a wraparound single-screen space station arena. The station is littered with floating random junk — rubber ducks, pizza slices, garden gnomes, and more. Players scramble to grab as many items as possible before the 90-second timer runs out. Zero-gravity zones flip physics, floating debris bounces everyone around, and ATTACK lets you steal items straight out of a rival's haul. Glitchy CRT scanlines and neon outlines wrap the whole chaos in a retro-futurist aesthetic.",
+  "players": "2-4",
+  "author": "game-creator",
+  "added": "2026-04-25",
+  "generated": true,
+  "game_dev_status": "coming_soon",
+  "spec_path": "games/_queue/space-junk-derby.md",
+  "hidden": true,
+  "feedback_code": "sj6p"
+}

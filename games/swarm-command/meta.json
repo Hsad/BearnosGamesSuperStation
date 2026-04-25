@@ -1,0 +1,11 @@
+{
+  "title": "Swarm Command",
+  "description": "Four players crew a starship under siege by waves of alien insects, each controlling a dedicated subsystem: the Pilot steers and dashes with the joystick, the Weapons Officer aims and fires with joystick + ATTACK, the Shields Engineer points the deflector arc and blocks hits with JUMP, and the Engines Chief throttles power and triggers overdrive. Chaos mounts as waves grow larger and faster, introducing armored beetles, long-range shooters, and lightning-fast hornets before the colossal Mothership arrives for the final showdown. Coordinate perfectly or watch the hull crumble — the fate of the ship is in all four hands.",
+  "players": "4",
+  "author": "claude",
+  "added": "2026-04-25",
+  "generated": true,
+  "game_dev_status": "ok",
+  "build_ordered": true,
+  "feedback_code": "sw8q"
+}

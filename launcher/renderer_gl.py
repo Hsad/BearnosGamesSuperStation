@@ -10,7 +10,7 @@ flicker every frame — all essentially free on the GPU.
 Public API is identical to renderer_pygame.py.
 """
 
-import os, random, sys, time
+import io, os, random, sys, time, wave
 import pygame
 import moderngl
 import numpy as np
@@ -30,7 +30,7 @@ COL_DIM    = ( 90,  85,  75)
 COL_ACCENT = (160, 150, 120)
 COL_DANGER = (200, 140,  90)
 
-BARREL_K       = 0.06
+BARREL_K       = 0.15
 SCANLINE_ALPHA = 70 / 255.0
 VIGNETTE_MAX   = 170 / 255.0
 GLOW_STRENGTH  = 0.30
@@ -38,13 +38,20 @@ GLOW_THRESHOLD = 0.20
 FLICKER_CHANCE = 0.30
 FLICKER_DEPTH  = 28
 
-BOOT_COL_W = 42
-BOOT_LINE_T = 0.15
+BOOT_VOLUME  = 0.20   # master boot-sound volume — raise once you know the room
+
+def set_boot_volume(vol: float) -> None:
+    global BOOT_VOLUME
+    BOOT_VOLUME = vol
+BOOT_COL_W   = 42
+BOOT_LINE_T  = 0.15
 BOOT_MESSAGES = [
-    ("BIOS CHECKSUM",                 "FF3A 9BC1  [PASS]"),
+    ("BIOS CHECKSUM",                 "0xDEADBEEF  [PASS]"),
     ("SYSTEM RAM DETECTION",          "32 MB FOUND"),
     ("DOWNLOADING MORE RAM",          "COMPLETE  [OK]"),
-    ("EXTENDED MEMORY TEST 640K",     "[PASS]"),
+    ("DOWNLOADING ANY VRAM",          "PENDING [NOVIDIA]"),
+    ("EXTENDED MEMORY TEST 2GB",      "[PASS]"),
+    ("LAST USER HERE",                "KILROY"),
     ("LAST DATUM",                    "5318008"),
     ("GRID INTERFACE CONTROLLER",     "ONLINE    [OK]"),
     ("LIGHT CYCLE ENGINE v7.1",       "LOADED    [OK]"),
@@ -61,6 +68,7 @@ BOOT_MESSAGES = [
     ("SYNTHWAVE AUDIO DRIVER v8.4",   "LOADED    [OK]"),
     ("JOYSTICK ARRAY CALIBRATION x4", "[OK]"),
     ("VAPORWAVE RENDERING PIPELINE",  "READY     [OK]"),
+    ("FROG BLASTING THE VENT CORE",   "777"),
     ("TEMPORAL ALIGNMENT: 1993",      "LOCKED"),
 ]
 
@@ -89,44 +97,50 @@ uniform float u_time;
 in vec2 v_uv;
 out vec4 out_color;
 
-const float BARREL_K    = 0.06;
+const float BARREL_K    = 0.15;
 const float SCANLINE_A  = 0.2745;   // 70/255
 const float VIG_MAX     = 0.6667;   // 170/255
 const float VIG_START   = 0.30;
 const float VIG_RANGE   = 0.70;
 
-// Rolling bar sync artifact — one sweep every ~9 seconds, very subtle
-const float BAR_SPEED  = 0.11;   // screen-heights per second
-const float BAR_WIDTH  = 0.07;   // band height as fraction of screen
-const float BAR_WARP   = 0.004;  // max horizontal offset (~7 px at 1920)
-const float BAR_FREQ   = 7.0;    // sawtooth cycles within the band
+// Rolling bar sync artifact — one sweep every ~9 seconds
+const float BAR_SPEED  = 0.11;    // screen-heights per second
+const float BAR_WIDTH  = 0.022;   // narrow band — sharp transient
+const float BAR_WARP   = 0.0022;  // max horizontal offset (~4 px at 1920)
+const float BAR_FREQ   = 16.0;    // tight zigzag cycles within the band
 
 void main() {
     // Correct for OpenGL vs. pygame Y-axis convention
     vec2 uv = vec2(v_uv.x, 1.0 - v_uv.y);
 
-    // Rolling bar: find how close this pixel's Y is to the bar's current position
-    float bar_y    = fract(u_time * BAR_SPEED);
-    float bar_dist = abs(uv.y - bar_y);
-    bar_dist       = min(bar_dist, 1.0 - bar_dist);  // wrap at top/bottom
-    float influence = smoothstep(BAR_WIDTH, 0.0, bar_dist);
-
-    // Sawtooth wave across Y — displacement flips sign each cycle
-    float saw = fract(uv.y * BAR_FREQ) * 2.0 - 1.0;
-    uv.x += saw * BAR_WARP * influence;
-
-    // Vignette in pre-warp screen space so the dark border stays at screen edges
+    // Vignette in linear screen space — unaffected by barrel or bar warp
     vec2 cc  = uv - 0.5;
     float d  = length(cc) * 1.4142;           // 1.4142 ≈ 1/length(0.5,0.5)
     float vt = clamp((d - VIG_START) / VIG_RANGE, 0.0, 1.0);
     float vig = 1.0 - vt * vt * (3.0 - 2.0 * vt) * VIG_MAX;
 
-    // Barrel distortion
+    // Barrel distortion — defines the fixed screen edge shape
     vec2 buv = uv + cc * dot(cc, cc) * BARREL_K;
     if (buv.x < 0.0 || buv.x > 1.0 || buv.y < 0.0 || buv.y > 1.0) {
         out_color = vec4(0.0, 0.0, 0.0, 1.0);
         return;
     }
+
+    // Rolling bar warp applied after barrel so it displaces image content
+    // but never touches the screen border shape.
+    float bar_y    = fract(u_time * BAR_SPEED);
+    float bar_dist = abs(buv.y - bar_y);
+    bar_dist       = min(bar_dist, 1.0 - bar_dist);  // wrap at top/bottom
+    float influence = smoothstep(BAR_WIDTH, 0.0, bar_dist);
+
+    // Beat-frequency envelope: product of two incommensurate sines, positive
+    // half only — makes the glitch rise and fall rather than carry constantly.
+    float env = sin(u_time * 1.31) * sin(u_time * 0.43);
+    influence *= clamp(env, 0.0, 1.0);
+
+    // Sawtooth wave across Y — displacement flips sign each cycle
+    float saw = fract(buv.y * BAR_FREQ) * 2.0 - 1.0;
+    buv.x = clamp(buv.x + saw * BAR_WARP * influence, 0.0, 1.0);
 
     vec3 col = texture(u_scene, buv).rgb
              + texture(u_glow,  buv).rgb * u_glow_strength;
@@ -159,6 +173,106 @@ _scene_cache:      dict[int, tuple[pygame.Surface, bytes]] = {}
 _BLACK_GLOW:       bytes = bytes(GLOW_W * GLOW_H * 3)  # used during boot/launching
 _start_time:       float = 0.0
 _screensaver_on:   bool  = False  # suppresses flicker_tick redraws on blank screen
+_boot_sounds:      dict  = {}     # synthesized sounds for the boot sequence
+
+
+# ── Boot sounds ───────────────────────────────────────────────────────────────
+
+def _build_boot_sounds() -> dict:
+    """Synthesize all boot sounds using numpy. Returns {} if mixer unavailable."""
+    if not pygame.mixer.get_init():
+        return {}
+
+    SR = 44100
+
+    def _snd(arr: np.ndarray, vol: float):
+        arr = np.clip(arr, -1.0, 1.0)
+        s16 = (arr * 32767).astype(np.int16)
+        buf = io.BytesIO()
+        with wave.open(buf, 'wb') as w:
+            w.setnchannels(1)
+            w.setsampwidth(2)
+            w.setframerate(SR)
+            w.writeframes(s16.tobytes())
+        buf.seek(0)
+        snd = pygame.mixer.Sound(buf)
+        snd.set_volume(BOOT_VOLUME * vol)
+        return snd
+
+    def _t(dur):
+        return np.linspace(0, dur, int(SR * dur))
+
+    # CRT power-on: FM synthesis for the organic hollow "dwing/thunk" —
+    # carrier sweeps down (mouth closing), modulator adds wet formant texture
+    t      = _t(0.55)
+    car_f  = 180 * np.exp(-t * 9) + 40                  # 220 Hz → 40 Hz
+    car_ph = 2 * np.pi * np.cumsum(car_f) / SR
+    mod_f  = 220 * np.exp(-t * 11) + 30
+    mod_ph = 2 * np.pi * np.cumsum(mod_f) / SR
+    tone   = np.sin(car_ph + np.sin(mod_ph) * 2.5) * np.exp(-t * 9) * 0.85
+    click_n = int(SR * 0.003)
+    click   = np.zeros(len(t))
+    click[:click_n] = np.exp(-np.arange(click_n) * 800 / SR) * np.random.choice([-1.0, 1.0], click_n)
+    crt    = np.clip(click * 0.35 + tone, -1.0, 1.0)
+
+    # Static: 2 s white noise base + sparse crackle peaks for texture,
+    # triggered at the scan line so it covers the whole CRT warmup
+    t = _t(2.0)
+    base    = np.random.uniform(-1, 1, len(t)) * np.exp(-t * 2.5)
+    crackle = np.zeros(len(t))
+    s_len   = int(SR * 0.003)
+    for idx in np.random.randint(0, len(t) - s_len, 70):
+        bt = np.arange(s_len) / SR
+        crackle[idx:idx + s_len] += np.random.choice([-1.0, 1.0]) * np.exp(-bt * 500)
+    crackle *= np.exp(-t * 3.5)
+    static   = np.clip(base * 0.65 + crackle * 0.60, -1.0, 1.0)
+
+    # CRT whine: 15.7 kHz tone — fades in at startup, sustains through boot,
+    # then drifts out over ~2.5 s after the menu appears
+    t     = _t(12.5)
+    w_in  = np.minimum(t / 0.15, 1.0)
+    w_out = np.clip(1.0 - (t - 9.65) / 2.5, 0.0, 1.0)
+    w_env = w_in * np.where(t < 9.65, 1.0, w_out)
+    whine = np.sin(2 * np.pi * 15734 * t) * w_env * 0.70
+
+    # Key tick: short click (noise) + 80 Hz thump for depth
+    t = _t(0.04)
+    tick = (np.random.uniform(-1, 1, len(t)) * np.exp(-t * 150) * 0.45 +
+            np.sin(2 * np.pi * 80 * t)       * np.exp(-t *  80) * 0.65)
+
+    # Halo "Du Du Du Dah" — G3/C4 (one octave lower), bass-weighted harmonics,
+    # long fade on the final note
+    def _note(freq, dur, decay_rate=1.8, attack=0.06):
+        t2   = _t(dur)
+        saw  = sum(np.sin(2 * np.pi * freq * n * t2) / n for n in range(3, 10)) * 0.12
+        tone = (np.sin(2 * np.pi * freq     * t2) * 0.72 +
+                np.sin(2 * np.pi * freq * 2 * t2) * 0.20 +
+                saw)
+        env  = np.exp(-t2 * decay_rate)
+        ramp = np.minimum(t2 / attack, 1.0)
+        return tone * env * ramp
+
+    NOTE_DUR = 0.13
+    NOTE_GAP = 0.045
+    DAH_DUR  = 1.47   # ~2/3 of previous fade
+    E2, E3   = 82.41, 164.81   # exact notes from MIDI at 36s
+    total    = int(SR * (3 * (NOTE_DUR + NOTE_GAP) + DAH_DUR))
+    halo     = np.zeros(total)
+    for i in range(3):
+        off = int(SR * i * (NOTE_DUR + NOTE_GAP))
+        seg = _note(E2, NOTE_DUR)
+        halo[off:off + len(seg)] += seg
+    dah_off = int(SR * 3 * (NOTE_DUR + NOTE_GAP))
+    seg = _note(E3, DAH_DUR, decay_rate=0.55, attack=0.08)   # very slow decay
+    halo[dah_off:dah_off + len(seg)] += seg
+
+    return {
+        'crt':    _snd(crt,    1.0),
+        'static': _snd(static, 0.72),
+        'whine':  _snd(whine,  0.70),
+        'tick':   _snd(tick,   0.75),
+        'halo':   _snd(halo,   1.0),
+    }
 
 
 # ── Init ───────────────────────────────────────────────────────────────────────
@@ -167,11 +281,13 @@ def _init_pygame() -> None:
     global _ctx, _prog, _vao, _scene_tex, _glow_tex
     global _font, _char_w, _char_h, _term_rows, _term_cols
     global _starfield, _glyph_cache, _scene_cache, _start_time, _screensaver_on
+    global _boot_sounds
 
     os.environ.setdefault('SDL_VIDEODRIVER', 'kmsdrm')
     os.environ.setdefault('MESA_GL_VERSION_OVERRIDE',   '3.3')
     os.environ.setdefault('MESA_GLSL_VERSION_OVERRIDE', '330')
 
+    pygame.mixer.pre_init(44100, -16, 2, 4096)
     pygame.init()
     pygame.mouse.set_visible(False)
 
@@ -196,9 +312,13 @@ def _init_pygame() -> None:
     _vao = _ctx.vertex_array(_prog, [(vbo, '2f', 'in_vert')])
 
     _scene_tex = _ctx.texture((SCREEN_W, SCREEN_H), 3)
-    _scene_tex.filter = (moderngl.LINEAR, moderngl.LINEAR)
+    _scene_tex.filter   = (moderngl.LINEAR, moderngl.LINEAR)
+    _scene_tex.repeat_x = False
+    _scene_tex.repeat_y = False
     _glow_tex  = _ctx.texture((GLOW_W, GLOW_H), 3)
-    _glow_tex.filter  = (moderngl.LINEAR, moderngl.LINEAR)
+    _glow_tex.filter    = (moderngl.LINEAR, moderngl.LINEAR)
+    _glow_tex.repeat_x  = False
+    _glow_tex.repeat_y  = False
 
     _scene_tex.use(location=0)
     _glow_tex.use(location=1)
@@ -231,6 +351,12 @@ def _init_pygame() -> None:
     _screensaver_on = False
 
     _starfield = _build_starfield()
+
+    try:
+        _boot_sounds = _build_boot_sounds()
+    except Exception as e:
+        print(f'[renderer_gl] boot sounds unavailable: {e}', file=sys.stderr)
+        _boot_sounds = {}
 
     print(f'[renderer_gl] font: {_char_w}×{_char_h}px  '
           f'grid: {_term_cols}×{_term_rows}', file=sys.stderr)
@@ -275,9 +401,13 @@ def _rebuild_gl() -> None:
     _vao = _ctx.vertex_array(_prog, [(vbo, '2f', 'in_vert')])
 
     _scene_tex = _ctx.texture((SCREEN_W, SCREEN_H), 3)
-    _scene_tex.filter = (moderngl.LINEAR, moderngl.LINEAR)
+    _scene_tex.filter   = (moderngl.LINEAR, moderngl.LINEAR)
+    _scene_tex.repeat_x = False
+    _scene_tex.repeat_y = False
     _glow_tex  = _ctx.texture((GLOW_W, GLOW_H), 3)
-    _glow_tex.filter  = (moderngl.LINEAR, moderngl.LINEAR)
+    _glow_tex.filter    = (moderngl.LINEAR, moderngl.LINEAR)
+    _glow_tex.repeat_x  = False
+    _glow_tex.repeat_y  = False
 
     _scene_tex.use(location=0)
     _glow_tex.use(location=1)
@@ -312,13 +442,15 @@ def _draw_centered(surf: pygame.Surface, text: str, row: int,
 
 
 def _build_starfield() -> pygame.Surface:
+    import random
     surf = pygame.Surface((SCREEN_W, SCREEN_H))
     surf.fill(COL_BG)
+    rng   = random.Random()
+    chars = ['·', '·', '·', '·', '.', '.', '.', '*', '*', '+']
     for r in range(7, _term_rows + 1):
         for c in range(1, _term_cols + 1):
-            ch = _star_char(r, c)
-            if ch != ' ':
-                surf.blit(_glyph(ch, COL_DIM),
+            if rng.random() < 0.05:
+                surf.blit(_glyph(rng.choice(chars), COL_DIM),
                           ((c - 1) * _char_w, (r - 1) * _char_h))
     return surf
 
@@ -432,10 +564,20 @@ def _compose_menu(app, idx: int | None = None) -> pygame.Surface:
             _render_block_title(scene, game.title, box_col, box_row, box_w, box_h)
 
     _draw(scene, ('═' * cols)[:cols], rows - 1, 1, COL_ACCENT)
-    _draw_centered(scene,
-                   '◄ LEFT/RIGHT TO BROWSE ►    [ ATTACK ] TO PLAY',
-                   rows, COL_SEPIA)
+    if count > 0 and getattr(games[idx], 'generated', False):
+        hint = '◄ LEFT/RIGHT TO BROWSE ►    [ ATTACK ] TO PLAY    [ JUMP ] TO EDIT'
+    else:
+        hint = '◄ LEFT/RIGHT TO BROWSE ►    [ ATTACK ] TO PLAY'
+    _draw_centered(scene, hint, rows, COL_SEPIA)
     return scene
+
+
+_COMING_SOON_BANNER = [
+    "▄▖        ▘      ▄▖      ",
+    "▌ ▛▌▛▛▌▛▛▌▌▛▌▛▌  ▚ ▛▌▛▌▛▌",
+    "▙▖▙▌▌▌▌▌▌▌▌▌▌▙▌  ▄▌▙▌▙▌▌▌",
+    "             ▄▌          ",
+]
 
 
 def _render_textcard_full(surf: pygame.Surface, game, rows: int) -> None:
@@ -463,6 +605,15 @@ def _render_textcard_full(surf: pygame.Surface, game, rows: int) -> None:
             break
         if line:
             surf.blit(_glyph(line, COL_CREAM), (start_x, (r - 1) * _char_h))
+
+    if getattr(game, "game_dev_status", None) == "coming_soon":
+        banner_w  = max(len(l) for l in _COMING_SOON_BANNER)
+        banner_x  = (SCREEN_W - banner_w * _char_w) // 2
+        banner_start_row = content_end - len(_COMING_SOON_BANNER) + 1
+        for i, line in enumerate(_COMING_SOON_BANNER):
+            if line.strip():
+                surf.blit(_glyph(line, COL_ACCENT),
+                          (banner_x, (banner_start_row + i - 1) * _char_h))
 
 
 def _render_block_title(surf: pygame.Surface, title: str,
@@ -626,6 +777,14 @@ def render_boot(app, monitor_was_off: bool = False) -> None:
 
     _glow_tex.write(_BLACK_GLOW)
 
+    _snd_fired:  set = set()   # tracks which one-shot sounds have played
+    _ticks_fired: set = set()  # tracks which BIOS-line ticks have played
+
+    def _play(name: str) -> None:
+        if name not in _snd_fired and name in _boot_sounds:
+            _boot_sounds[name].play()
+            _snd_fired.add(name)
+
     while True:
         t = pygame.time.get_ticks() / 1000.0 - start
         if t >= t_end:
@@ -639,6 +798,9 @@ def render_boot(app, monitor_was_off: bool = False) -> None:
             pass
 
         elif t < CRT_END:
+            _play('crt')
+            _play('static')
+            _play('whine')
             tc = t - MONITOR_DELAY
             if tc < 0.27:
                 p  = tc / 0.27
@@ -698,10 +860,15 @@ def render_boot(app, monitor_was_off: bool = False) -> None:
                 if line_frac < 0.50:
                     frame.blit(_glyph(dots, COL_SEPIA), (left_x, y))
                 else:
+                    if lines_done not in _ticks_fired:
+                        if 'tick' in _boot_sounds:
+                            _boot_sounds['tick'].play()
+                        _ticks_fired.add(lines_done)
                     frame.blit(_glyph(dots, COL_DIM),     (left_x, y))
                     frame.blit(_glyph(status, COL_CREAM), (right_x, y))
 
         elif t < t_fade:
+            _play('halo')
             frame.blit(_glyph(HEADER, COL_ACCENT),         (left_x, header_y))
             frame.blit(_glyph(SEP[:block_chars], COL_DIM), (left_x, sep_y))
             for i, (left, status) in enumerate(BOOT_MESSAGES):

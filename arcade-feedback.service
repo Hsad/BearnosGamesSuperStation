@@ -1,0 +1,14 @@
+[Unit]
+Description=Arcade Feedback Server
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /home/hsad/Arcade/feedback_server.py
+WorkingDirectory=/home/hsad/Arcade
+Restart=always
+RestartSec=5
+StandardOutput=append:/home/hsad/Arcade/logs/feedback_server.log
+StandardError=append:/home/hsad/Arcade/logs/feedback_server.log
+
+[Install]
+WantedBy=multi-user.target

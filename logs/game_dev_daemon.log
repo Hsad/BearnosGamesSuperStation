@@ -1,0 +1,122 @@
+2026-04-22 01:07:16,897  INFO     Game Dev Daemon started (pid 81049)
+2026-04-22 01:07:16,897  INFO     Game Dev Daemon started (pid 81049)
+2026-04-22 01:07:16,900  INFO     Processing spec: neon-vigil
+2026-04-22 01:07:16,900  INFO     Processing spec: neon-vigil
+2026-04-22 01:07:16,901  INFO     Copying spec to arcade@spark.local:/tmp/neon-vigil.md
+2026-04-22 01:07:16,901  INFO     Copying spec to arcade@spark.local:/tmp/neon-vigil.md
+ssh: Could not resolve hostname spark.local: Name or service not known
+scp: Connection closed
+2026-04-22 01:07:21,993  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/neon-vigil.md', 'arcade@spark.local:/tmp/neon-vigil.md']' returned non-zero exit status 255.
+2026-04-22 01:07:21,993  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/neon-vigil.md', 'arcade@spark.local:/tmp/neon-vigil.md']' returned non-zero exit status 255.
+2026-04-22 01:07:21,995  ERROR    Build failed for: neon-vigil
+2026-04-22 01:07:21,995  ERROR    Build failed for: neon-vigil
+2026-04-22 01:27:22,096  INFO     Processing spec: dungeon-vanguard
+2026-04-22 01:27:22,096  INFO     Processing spec: dungeon-vanguard
+2026-04-22 01:27:22,104  INFO     Copying spec to arcade@spark.local:/tmp/dungeon-vanguard.md
+2026-04-22 01:27:22,104  INFO     Copying spec to arcade@spark.local:/tmp/dungeon-vanguard.md
+ssh: Could not resolve hostname spark.local: Name or service not known
+scp: Connection closed
+2026-04-22 01:27:27,253  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/dungeon-vanguard.md', 'arcade@spark.local:/tmp/dungeon-vanguard.md']' returned non-zero exit status 255.
+2026-04-22 01:27:27,253  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/dungeon-vanguard.md', 'arcade@spark.local:/tmp/dungeon-vanguard.md']' returned non-zero exit status 255.
+2026-04-22 01:27:27,257  ERROR    Build failed for: dungeon-vanguard
+2026-04-22 01:27:27,257  ERROR    Build failed for: dungeon-vanguard
+2026-04-23 01:54:01,432  INFO     Processing spec: the-failing-engine
+2026-04-23 01:54:01,432  INFO     Processing spec: the-failing-engine
+2026-04-23 01:54:01,447  INFO     Copying spec to arcade@spark.local:/tmp/the-failing-engine.md
+2026-04-23 01:54:01,447  INFO     Copying spec to arcade@spark.local:/tmp/the-failing-engine.md
+ssh: Could not resolve hostname spark.local: Name or service not known
+scp: Connection closed
+2026-04-23 01:54:06,600  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/the-failing-engine.md', 'arcade@spark.local:/tmp/the-failing-engine.md']' returned non-zero exit status 255.
+2026-04-23 01:54:06,600  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/the-failing-engine.md', 'arcade@spark.local:/tmp/the-failing-engine.md']' returned non-zero exit status 255.
+2026-04-23 01:54:06,604  ERROR    Build failed for: the-failing-engine
+2026-04-23 01:54:06,604  ERROR    Build failed for: the-failing-engine
+2026-04-23 02:57:36,851  INFO     Processing spec: void-reaper
+2026-04-23 02:57:36,851  INFO     Processing spec: void-reaper
+2026-04-23 02:57:36,858  INFO     Copying spec to arcade@spark.local:/tmp/void-reaper.md
+2026-04-23 02:57:36,858  INFO     Copying spec to arcade@spark.local:/tmp/void-reaper.md
+ssh: Could not resolve hostname spark.local: Name or service not known
+scp: Connection closed
+2026-04-23 02:57:42,050  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/void-reaper.md', 'arcade@spark.local:/tmp/void-reaper.md']' returned non-zero exit status 255.
+2026-04-23 02:57:42,050  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/void-reaper.md', 'arcade@spark.local:/tmp/void-reaper.md']' returned non-zero exit status 255.
+2026-04-23 02:57:42,053  ERROR    Build failed for: void-reaper
+2026-04-23 02:57:42,053  ERROR    Build failed for: void-reaper
+2026-04-25 04:11:23,307  INFO     Processing spec: bunker-down
+2026-04-25 04:11:23,307  INFO     Processing spec: bunker-down
+2026-04-25 04:11:23,322  INFO     Copying spec to arcade@spark.local:/tmp/bunker-down.md
+2026-04-25 04:11:23,322  INFO     Copying spec to arcade@spark.local:/tmp/bunker-down.md
+ssh: Could not resolve hostname spark.local: Name or service not known
+scp: Connection closed
+2026-04-25 04:11:28,478  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/bunker-down.md', 'arcade@spark.local:/tmp/bunker-down.md']' returned non-zero exit status 255.
+2026-04-25 04:11:28,478  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/bunker-down.md', 'arcade@spark.local:/tmp/bunker-down.md']' returned non-zero exit status 255.
+2026-04-25 04:11:28,481  ERROR    Build failed for: bunker-down
+2026-04-25 04:11:28,481  ERROR    Build failed for: bunker-down
+2026-04-25 04:37:58,616  INFO     Processing spec: space-junk-derby
+2026-04-25 04:37:58,616  INFO     Processing spec: space-junk-derby
+2026-04-25 04:37:58,618  INFO     Copying spec to arcade@spark.local:/tmp/space-junk-derby.md
+2026-04-25 04:37:58,618  INFO     Copying spec to arcade@spark.local:/tmp/space-junk-derby.md
+ssh: Could not resolve hostname spark.local: Name or service not known
+scp: Connection closed
+2026-04-25 04:38:03,728  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/space-junk-derby.md', 'arcade@spark.local:/tmp/space-junk-derby.md']' returned non-zero exit status 255.
+2026-04-25 04:38:03,728  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/space-junk-derby.md', 'arcade@spark.local:/tmp/space-junk-derby.md']' returned non-zero exit status 255.
+2026-04-25 04:38:03,731  ERROR    Build failed for: space-junk-derby
+2026-04-25 04:38:03,731  ERROR    Build failed for: space-junk-derby
+2026-04-25 05:01:33,904  INFO     Processing spec: ice-clash
+2026-04-25 05:01:33,904  INFO     Processing spec: ice-clash
+2026-04-25 05:01:33,906  INFO     Copying spec to arcade@spark.local:/tmp/ice-clash.md
+2026-04-25 05:01:33,906  INFO     Copying spec to arcade@spark.local:/tmp/ice-clash.md
+ssh: Could not resolve hostname spark.local: Name or service not known
+scp: Connection closed
+2026-04-25 05:01:39,009  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/ice-clash.md', 'arcade@spark.local:/tmp/ice-clash.md']' returned non-zero exit status 255.
+2026-04-25 05:01:39,009  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/ice-clash.md', 'arcade@spark.local:/tmp/ice-clash.md']' returned non-zero exit status 255.
+2026-04-25 05:01:39,010  ERROR    Build failed for: ice-clash
+2026-04-25 05:01:39,010  ERROR    Build failed for: ice-clash
+2026-04-25 05:26:09,185  INFO     Processing spec: sync
+2026-04-25 05:26:09,185  INFO     Processing spec: sync
+2026-04-25 05:26:09,192  INFO     Copying spec to arcade@spark.local:/tmp/sync.md
+2026-04-25 05:26:09,192  INFO     Copying spec to arcade@spark.local:/tmp/sync.md
+ssh: Could not resolve hostname spark.local: Name or service not known
+scp: Connection closed
+2026-04-25 05:26:14,290  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/sync.md', 'arcade@spark.local:/tmp/sync.md']' returned non-zero exit status 255.
+2026-04-25 05:26:14,290  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/sync.md', 'arcade@spark.local:/tmp/sync.md']' returned non-zero exit status 255.
+2026-04-25 05:26:14,294  ERROR    Build failed for: sync
+2026-04-25 05:26:14,294  ERROR    Build failed for: sync
+2026-04-25 05:42:44,456  INFO     Processing spec: swarm-command
+2026-04-25 05:42:44,456  INFO     Processing spec: swarm-command
+2026-04-25 05:42:44,457  INFO     Copying spec to arcade@spark.local:/tmp/swarm-command.md
+2026-04-25 05:42:44,457  INFO     Copying spec to arcade@spark.local:/tmp/swarm-command.md
+ssh: Could not resolve hostname spark.local: Name or service not known
+scp: Connection closed
+2026-04-25 05:42:49,506  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/swarm-command.md', 'arcade@spark.local:/tmp/swarm-command.md']' returned non-zero exit status 255.
+2026-04-25 05:42:49,506  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/swarm-command.md', 'arcade@spark.local:/tmp/swarm-command.md']' returned non-zero exit status 255.
+2026-04-25 05:42:49,508  ERROR    Build failed for: swarm-command
+2026-04-25 05:42:49,508  ERROR    Build failed for: swarm-command
+2026-04-25 07:31:50,092  INFO     Processing spec: garden-zen
+2026-04-25 07:31:50,092  INFO     Processing spec: garden-zen
+2026-04-25 07:31:50,098  INFO     Copying spec to arcade@spark.local:/tmp/garden-zen.md
+2026-04-25 07:31:50,098  INFO     Copying spec to arcade@spark.local:/tmp/garden-zen.md
+ssh: Could not resolve hostname spark.local: Name or service not known
+scp: Connection closed
+2026-04-25 07:31:55,247  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/garden-zen.md', 'arcade@spark.local:/tmp/garden-zen.md']' returned non-zero exit status 255.
+2026-04-25 07:31:55,247  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/garden-zen.md', 'arcade@spark.local:/tmp/garden-zen.md']' returned non-zero exit status 255.
+2026-04-25 07:31:55,248  ERROR    Build failed for: garden-zen
+2026-04-25 07:31:55,248  ERROR    Build failed for: garden-zen
+2026-04-25 20:02:30,133  INFO     Processing spec: neon-blitz
+2026-04-25 20:02:30,133  INFO     Processing spec: neon-blitz
+2026-04-25 20:02:30,135  INFO     Copying spec to arcade@spark.local:/tmp/neon-blitz.md
+2026-04-25 20:02:30,135  INFO     Copying spec to arcade@spark.local:/tmp/neon-blitz.md
+ssh: Could not resolve hostname spark.local: Name or service not known
+scp: Connection closed
+2026-04-25 20:02:35,244  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/neon-blitz.md', 'arcade@spark.local:/tmp/neon-blitz.md']' returned non-zero exit status 255.
+2026-04-25 20:02:35,244  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/neon-blitz.md', 'arcade@spark.local:/tmp/neon-blitz.md']' returned non-zero exit status 255.
+2026-04-25 20:02:35,249  ERROR    Build failed for: neon-blitz
+2026-04-25 20:02:35,249  ERROR    Build failed for: neon-blitz
+2026-04-25 22:24:06,400  INFO     Processing spec: abyss-runner
+2026-04-25 22:24:06,400  INFO     Processing spec: abyss-runner
+2026-04-25 22:24:06,419  INFO     Copying spec to arcade@spark.local:/tmp/abyss-runner.md
+2026-04-25 22:24:06,419  INFO     Copying spec to arcade@spark.local:/tmp/abyss-runner.md
+ssh: Could not resolve hostname spark.local: Name or service not known
+scp: Connection closed
+2026-04-25 22:24:11,648  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/abyss-runner.md', 'arcade@spark.local:/tmp/abyss-runner.md']' returned non-zero exit status 255.
+2026-04-25 22:24:11,648  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/abyss-runner.md', 'arcade@spark.local:/tmp/abyss-runner.md']' returned non-zero exit status 255.
+2026-04-25 22:24:11,661  ERROR    Build failed for: abyss-runner
+2026-04-25 22:24:11,661  ERROR    Build failed for: abyss-runner

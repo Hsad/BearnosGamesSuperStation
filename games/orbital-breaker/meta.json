@@ -4,5 +4,6 @@
   "players": "1-4",
   "author": "hsad",
   "added": "2026-04-18",
-  "hidden": true
+  "hidden": false,
+  "feedback_code": "ob3t"
 }

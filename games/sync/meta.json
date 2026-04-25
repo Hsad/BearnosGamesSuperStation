@@ -1,0 +1,12 @@
+{
+  "title": "Sync",
+  "description": "Players navigate an abstract minimalist isometric space, moving themselves and objects with heavy physics. Work together to reach synchronized goals while manipulating the environment with push and freeze mechanics.",
+  "players": "1-4",
+  "author": "game-creator",
+  "added": "2026-04-25",
+  "generated": true,
+  "game_dev_status": "coming_soon",
+  "spec_path": "games/_queue/sync.md",
+  "hidden": true,
+  "feedback_code": "sy4v"
+}

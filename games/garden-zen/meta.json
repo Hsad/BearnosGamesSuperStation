@@ -1,0 +1,12 @@
+{
+  "title": "Garden Zen",
+  "description": "A relaxing cooperative game where 1-2 players tend an endless garden, planting seeds and watering plants while weather and seasons affect growth.",
+  "players": "1-2",
+  "author": "game-creator",
+  "added": "2026-04-25",
+  "generated": true,
+  "game_dev_status": "coming_soon",
+  "spec_path": "games/_queue/garden-zen.md",
+  "hidden": true,
+  "feedback_code": "gz2n"
+}

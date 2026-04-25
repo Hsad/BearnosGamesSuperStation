@@ -15,19 +15,24 @@ from input_handler import (
 from renderer_gl import (
     get_terminal_size, term_enter_alt_screen, term_leave_alt_screen,
     render, render_boot, render_launching, render_screensaver, flicker_tick,
-    clear_scene_cache, warm_next_scene_cache
+    clear_scene_cache, warm_next_scene_cache, set_boot_volume
 )
 from launch_game import launch_game
 from game_creator import run_game_creator
+from game_editor import run_game_editor
 
 ARCADE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LAUNCHER_DIR = os.path.dirname(os.path.abspath(__file__))
 CONTROLLERS_JSON = os.path.join(ARCADE_DIR, "config", "controllers.json")
 RESCAN_INTERVAL = 5.0
-SCREENSAVER_TIMEOUT = 60.0
+SCREENSAVER_TIMEOUT = 30.0
 DISPLAY_OFF_TIMEOUT = 300.0  # 5 minutes after last input
-WAKE_REQUIRED_DURATION = 5.0  # seconds of inputs needed to wake display
-WAKE_GAP_TOLERANCE = 2.0      # reset wake attempt if no input for this long
+WAKE_DURATION_MAX = 7.0   # wake hold required immediately after screensaver starts
+WAKE_DURATION_MIN = 0.5   # floor after 6.5 hours of screensaver
+WAKE_DECAY_PER_HR = 1.0   # seconds shed per hour
+WAKE_GAP_TOLERANCE = 2.0  # reset wake attempt if no input for this long
+HIDE_CHORD_WINDOW = 0.5       # P1-DOWN + P2-UP must arrive within this many seconds
+DISPLAY_WAKE_DELAY = 15.0     # seconds after display power-on before showing boot (screen warm-up)
 DEV_MODE = os.environ.get("ARCADE_DEV") == "1"
 
 def _source_mtimes() -> dict[str, float]:
@@ -51,9 +56,12 @@ class App:
         self.state = "MENU"  # MENU | LAUNCHING
         self.last_input_time = time.monotonic()
         self.screensaver_active = False
+        self.screensaver_start_time: float | None = None
         self.display_off = False
+        self.display_power_on_time: float | None = None
         self.wake_attempt_start: float | None = None
         self.last_wake_input_time: float | None = None
+        self._recent_actions: dict[tuple[int, Action], float] = {}
 
     def game_list(self):
         if self._calibrate_unlocked:
@@ -85,6 +93,8 @@ class App:
                 self.state = "LAUNCHING"
                 if game.is_creator:
                     run_game_creator(self)
+                elif game.game_dev_status == "coming_soon":
+                    run_game_editor(self, game)
                 else:
                     render_launching(self)
                     launch_game(self)
@@ -93,6 +103,20 @@ class App:
                 self.state = "MENU"
                 self.last_input_time = time.monotonic()
                 self.term_rows, self.term_cols = get_terminal_size()
+            return
+
+        if ev.action == Action.JUMP:
+            games = self.game_list()
+            if games:
+                game = games[self.selected]
+                if game.generated:
+                    self.state = "LAUNCHING"
+                    run_game_editor(self, game)
+                    while poll_input(self.fds, self.ctrl, timeout_ms=0):
+                        pass
+                    self.state = "MENU"
+                    self.last_input_time = time.monotonic()
+                    self.term_rows, self.term_cols = get_terminal_size()
             return
 
         if ev.action == Action.LEFT:
@@ -122,6 +146,26 @@ class App:
             self._calibrate_unlocked = True
             self.selected = 0  # calibrate is now index 0
 
+    def wake_duration(self) -> float:
+        if self.screensaver_start_time is None:
+            return WAKE_DURATION_MAX
+        hours = (time.monotonic() - self.screensaver_start_time) / 3600
+        return max(WAKE_DURATION_MIN, WAKE_DURATION_MAX - hours * WAKE_DECAY_PER_HR)
+
+    def check_hide_chord(self, ev: ActionEvent) -> bool:
+        """Returns True when P1-DOWN + P2-UP are pressed within HIDE_CHORD_WINDOW."""
+        now = time.monotonic()
+        key = (ev.player, ev.action)
+        self._recent_actions[key] = now
+        self._recent_actions = {k: t for k, t in self._recent_actions.items()
+                                 if now - t <= HIDE_CHORD_WINDOW}
+        if (self._recent_actions.get((1, Action.DOWN)) is not None and
+                self._recent_actions.get((2, Action.UP)) is not None):
+            self._recent_actions.clear()
+            return True
+        return False
+
+
 def _display_power(on: bool) -> None:
     devnull = {"stdout": subprocess.DEVNULL, "stderr": subprocess.DEVNULL}
     # ddcutil talks to the monitor over DDC/I2C, bypasses DRM master restriction
@@ -131,15 +175,24 @@ def _display_power(on: bool) -> None:
     # fallback for older Pi / fkms setups
     subprocess.call(["vcgencmd", "display_power", "1" if on else "0"], **devnull)
 
-
 def main():
+    sneaky = "--sneaky" in sys.argv
+    silent = "--silent" in sys.argv
+    _display_power(True)
+    if silent:
+        set_boot_volume(0.0)
     app = App()
     app.rescan()
     term_enter_alt_screen()
     app.term_rows, app.term_cols = get_terminal_size()
     mtimes = _source_mtimes() if DEV_MODE else {}
     try:
-        render_boot(app)
+        if sneaky:
+            app.screensaver_active = True
+            app.screensaver_start_time = time.monotonic()
+            render_screensaver()
+        else:
+            render_boot(app)
         while True:
             now = time.monotonic()
             if now - app.last_refresh >= RESCAN_INTERVAL:
@@ -154,15 +207,19 @@ def main():
                 if now - app.last_wake_input_time > WAKE_GAP_TOLERANCE:
                     app.wake_attempt_start = None
                     app.last_wake_input_time = None
-                elif now - app.wake_attempt_start >= WAKE_REQUIRED_DURATION:
-                    was_display_off = app.display_off
+                elif now - app.wake_attempt_start >= app.wake_duration():
+                    power_on_time = app.display_power_on_time
                     app.display_off = False
+                    app.display_power_on_time = None
                     app.screensaver_active = False
+                    app.screensaver_start_time = None
                     app.wake_attempt_start = None
                     app.last_wake_input_time = None
-                    if was_display_off:
-                        _display_power(True)
-                    render_boot(app, monitor_was_off=was_display_off)
+                    if power_on_time is not None:
+                        remaining = DISPLAY_WAKE_DELAY - (time.monotonic() - power_on_time)
+                        if remaining > 0:
+                            time.sleep(remaining)
+                    render_boot(app, monitor_was_off=(power_on_time is not None))
                     app.last_input_time = time.monotonic()
                     while poll_input(app.fds, app.ctrl, timeout_ms=0):  # drain held buttons
                         pass
@@ -172,9 +229,11 @@ def main():
                 if idle >= DISPLAY_OFF_TIMEOUT:
                     app.display_off = True
                     app.screensaver_active = True
+                    app.screensaver_start_time = now
                     _display_power(False)
                 elif idle >= SCREENSAVER_TIMEOUT and not app.screensaver_active:
                     app.screensaver_active = True
+                    app.screensaver_start_time = now
                     render_screensaver()
 
             if app.state == "MENU" and not app.screensaver_active and not app.display_off:
@@ -183,7 +242,16 @@ def main():
             flicker_tick()
             events = poll_input(app.fds, app.ctrl, timeout_ms=100)
             if events:
+                if app.display_off:
+                    app.display_off = False
+                    app.display_power_on_time = time.monotonic()
+                    _display_power(True)
                 for ev in events:
+                    if app.state == "MENU" and not app.screensaver_active and app.check_hide_chord(ev):
+                        app.screensaver_active = True
+                        app.screensaver_start_time = time.monotonic()
+                        render_screensaver()
+                        break
                     app.check_combo(ev)
                     app.handle_event(ev)
                 if not app.screensaver_active:

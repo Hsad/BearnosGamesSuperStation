@@ -1,0 +1,15 @@
+{
+  "builders": [
+    {"id": "oneshot",    "name": "OneShot | Claude Sonnet"},
+    {"id": "spark",      "name": "OneShot | Nemotron-3-Super:120b"},
+    {"id": "ollama_cnc", "name": "OneShot | Gemma4:26b"},
+    {"id": "queue",    "name": "Queue  (daemon)",       "hidden": true}
+  ],
+  "spark_host":         "spark.local",
+  "spark_user":         "arcade",
+  "spark_agent_path":   "/home/arcade/arcade-builder/run_agent.sh",
+  "result_pickup_path": "/home/arcade/arcade-builder/output/",
+  "max_concurrent_builds": 1,
+  "build_cooldown_hours": 5,
+  "poll_interval_seconds": 30
+}

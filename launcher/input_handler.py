@@ -101,9 +101,11 @@ def poll_input(fds: list[int], ctrl: dict[int, tuple[int, Action]],
             if len(data) < EVDEV_SIZE:
                 break
             _, _, ev_type, code, value = struct.unpack(EVDEV_FMT, data)
-            if ev_type == EV_KEY and value == 1:  # key down only
+            if ev_type == EV_KEY and value in (1, 2):  # key down + key repeat
                 if code in ctrl:
                     player, action = ctrl[code]
+                    if value == 2 and action in (Action.ATTACK, Action.JUMP):
+                        continue  # buttons never auto-repeat
                     events.append(ActionEvent(player=player, action=action))
     return events
 
