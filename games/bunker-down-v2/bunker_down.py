@@ -133,6 +133,9 @@ COL_TURRET   = (130, 130, 140)
 
 
 # ----------------------------------------------------------------- traps
+# Players always start with SPIKE + TURRET. The rest are unlocked by walking
+# over pickups dropped by boss zombies. Each run picks a random subset of the
+# unlockable traps (the "run pool") so playthroughs vary.
 TRAPS = [
     {
         "key":   "SPIKE",
@@ -140,29 +143,62 @@ TRAPS = [
         "blurb": "8 spikes. they don't grow back.",
         "cost":  5,
         "color": (130, 110, 70),
-    },
-    {
-        "key":   "FLAME",
-        "name":  "Flame Barrel",
-        "blurb": "Aromatherapy",
-        "cost":  15,
-        "color": (210, 110, 40),
-    },
-    {
-        "key":   "FENCE",
-        "name":  "Electric Fence",
-        "blurb": "Vigorous Welcome Mat",
-        "cost":  20,
-        "color": (180, 220, 255),
+        "default": True,
     },
     {
         "key":   "TURRET",
         "name":  "Auto-Turret",
-        "blurb": "Friend-Shaped Object",
+        "blurb": "45° cone. zombies notice.",
         "cost":  40,
         "color": (180, 180, 195),
+        "default": True,
+    },
+    {
+        "key":   "FLAME",
+        "name":  "Flame Brazier",
+        "blurb": "lingering fire. ignites passersby.",
+        "cost":  15,
+        "color": (210, 110, 40),
+        "default": False,
+    },
+    {
+        "key":   "FENCE",
+        "name":  "Stun Fence",
+        "blurb": "1.5s stagger. weak damage.",
+        "cost":  20,
+        "color": (180, 220, 255),
+        "default": False,
+    },
+    {
+        "key":   "TAR",
+        "name":  "Tar Pit",
+        "blurb": "big slow field. no damage.",
+        "cost":  10,
+        "color": (40, 30, 50),
+        "default": False,
+    },
+    {
+        "key":   "MINE",
+        "name":  "Claymore",
+        "blurb": "one BIG bang. then gone.",
+        "cost":  25,
+        "color": (180, 60, 40),
+        "default": False,
+    },
+    {
+        "key":   "WIRE",
+        "name":  "Barbed Wire",
+        "blurb": "wide, durable, slow + chip.",
+        "cost":  12,
+        "color": (160, 150, 120),
+        "default": False,
     },
 ]
+TRAP_BY_KEY      = {t["key"]: t for t in TRAPS}
+DEFAULT_TRAPS    = [t["key"] for t in TRAPS if t["default"]]
+UNLOCKABLE_TRAPS = [t["key"] for t in TRAPS if not t["default"]]
+MAX_TRAP_SLOTS   = 4               # 2 defaults + up to 2 unlocked
+RUN_POOL_SIZE    = 3               # picked from UNLOCKABLE_TRAPS per run
 
 
 SNARK_KILLS = [
@@ -373,6 +409,8 @@ class Zombie:
         self.burn_t = 0.0  # flame burn timer
         self.kvx, self.kvy = 0.0, 0.0  # knockback velocity
         self.stab_cd = 0.0  # cooldown between spike hits so one zombie doesn't drain a trap in a frame
+        self.aggro_target = None  # (x, y) — overrides bunker steering when set
+        self.aggro_t      = 0.0   # remaining seconds of aggro
 
     def update(self, dt, traps, bunker):
         self.wob += dt * 8
@@ -398,8 +436,17 @@ class Zombie:
             self.kvy *= decay
         else:
             self.kvx = self.kvy = 0.0
-        # steer toward bunker center
-        dx, dy = BUNKER_CX - self.x, BUNKER_CY - self.y
+        # aggro decay
+        if self.aggro_t > 0:
+            self.aggro_t -= dt
+            if self.aggro_t <= 0:
+                self.aggro_target = None
+        # steer toward aggro target if any, else bunker center
+        if self.aggro_target is not None:
+            tx, ty = self.aggro_target
+        else:
+            tx, ty = BUNKER_CX, BUNKER_CY
+        dx, dy = tx - self.x, ty - self.y
         d = math.hypot(dx, dy) or 1.0
         dx, dy = dx / d, dy / d
         # wobble perpendicular
@@ -494,21 +541,45 @@ class Trap:
         self.alive = True
         self.t = 0.0
         if kind == "SPIKE":
-            self.spikes_max = 8         # individual spike count
+            self.spikes_max = 8
             self.spikes     = 8
-            self.spike_dmg  = 35        # damage per spike strike
+            self.spike_dmg  = 35
             self.r = 26
         elif kind == "FLAME":
-            self.life = 8.0
-            self.r = 70
+            # Persistent fire field. Zombies in radius get a sustained
+            # burn DoT so they keep burning after leaving.
+            self.life = 30.0
+            self.r    = 80
         elif kind == "FENCE":
-            self.hp = 220
-            self.r = 60
+            # Stun fence: hits hard with status, soft on damage.
+            self.hp = 350
+            self.r  = 70
+        elif kind == "TAR":
+            # Slow field, no damage, expires by time.
+            self.life = 40.0
+            self.r    = 95
+        elif kind == "MINE":
+            # One-shot AOE. Armed after a short setup so it doesn't insta-pop.
+            self.arm_t   = 0.6
+            self.r       = 22       # trigger radius
+            self.boom_r  = 110      # AOE radius
+            self.dmg     = 220
+            self.boom    = False    # set True on the frame it explodes
+            self.boom_age= 0.0
+        elif kind == "WIRE":
+            # Big durable obstacle: slows + chip damage.
+            self.hp = 500
+            self.r  = 70
         elif kind == "TURRET":
-            self.hp = 160
-            self.r = 18
-            self.range = 320
+            self.hp      = 130           # was 160 — slightly squishier
+            self.r       = 18
+            self.range   = 320
             self.fire_cd = 0.0
+            self.angle   = 0.0           # current barrel direction
+            self.target  = None          # cached current target
+            self.cone    = math.radians(22.5)  # half-angle = 22.5° (45° total)
+            self.rot_spd = 2.5           # rad/sec rotation cap
+            self.aggro_radius = 360      # zombies inside hear it shoot
 
     def update(self, dt, zombies, bullets):
         self.t += dt
@@ -523,25 +594,69 @@ class Trap:
                         self.alive = False
                         return
         elif self.kind == "FLAME":
+            # Persistent fire field — light radius, big burn DoT carry.
             for z in zombies:
                 if not z.alive: continue
                 if math.hypot(z.x - self.x, z.y - self.y) < self.r:
-                    z.hurt(35 * dt)
-                    z.burn_t = max(z.burn_t, 1.5)
+                    z.hurt(10 * dt)              # gentle direct damage
+                    z.burn_t = max(z.burn_t, 2.5)
             if self.t > self.life:
                 self.alive = False
         elif self.kind == "FENCE":
             for z in zombies:
                 if not z.alive: continue
                 if math.hypot(z.x - self.x, z.y - self.y) < self.r:
-                    z.hurt(45 * dt)
-                    z.slow_t = max(z.slow_t, 0.25)
+                    z.hurt(25 * dt)
+                    z.slow_t = max(z.slow_t, 1.5)   # strong stagger
                     self.hp -= 8 * dt
             if self.hp <= 0:
                 self.alive = False
+        elif self.kind == "TAR":
+            for z in zombies:
+                if not z.alive: continue
+                if math.hypot(z.x - self.x, z.y - self.y) < self.r:
+                    z.slow_t = max(z.slow_t, 0.3)
+            if self.t > self.life:
+                self.alive = False
+        elif self.kind == "WIRE":
+            for z in zombies:
+                if not z.alive: continue
+                if math.hypot(z.x - self.x, z.y - self.y) < self.r:
+                    z.hurt(12 * dt)
+                    z.slow_t = max(z.slow_t, 0.4)
+                    self.hp -= 3 * dt
+            if self.hp <= 0:
+                self.alive = False
+        elif self.kind == "MINE":
+            if self.boom:
+                # detonation frame already handled; trap goes away next frame
+                self.boom_age += dt
+                if self.boom_age > 0.5:
+                    self.alive = False
+                return
+            self.arm_t = max(0, self.arm_t - dt)
+            if self.arm_t > 0:
+                return
+            for z in zombies:
+                if not z.alive: continue
+                if math.hypot(z.x - self.x, z.y - self.y) < self.r + z.r:
+                    # KABOOM
+                    self.boom = True
+                    self.boom_age = 0.0
+                    for zz in zombies:
+                        if not zz.alive: continue
+                        dd = math.hypot(zz.x - self.x, zz.y - self.y)
+                        if dd < self.boom_r + zz.r:
+                            zz.hurt(self.dmg * (1.0 - dd / (self.boom_r + zz.r)))
+                            # knockback outward
+                            nx = (zz.x - self.x) / (dd or 1)
+                            ny = (zz.y - self.y) / (dd or 1)
+                            zz.kvx += nx * 700
+                            zz.kvy += ny * 700
+                    break
         elif self.kind == "TURRET":
             self.fire_cd -= dt
-            # take contact damage
+            # take contact damage from any zombie touching the cabinet
             for z in zombies:
                 if not z.alive: continue
                 if math.hypot(z.x - self.x, z.y - self.y) < z.r + self.r:
@@ -549,17 +664,35 @@ class Trap:
             if self.hp <= 0:
                 self.alive = False
                 return
-            if self.fire_cd <= 0:
-                # find nearest zombie in range
-                best, bd = None, self.range
-                for z in zombies:
-                    if not z.alive: continue
-                    d = math.hypot(z.x - self.x, z.y - self.y)
-                    if d < bd:
-                        bd = d; best = z
-                if best is not None:
+            # find best target in range
+            best, bd = None, self.range
+            for z in zombies:
+                if not z.alive: continue
+                d = math.hypot(z.x - self.x, z.y - self.y)
+                if d < bd:
+                    bd = d; best = z
+            self.target = best
+            if best is not None:
+                want = math.atan2(best.y - self.y, best.x - self.x)
+                diff = (want - self.angle + math.pi) % math.tau - math.pi
+                step = self.rot_spd * dt
+                if abs(diff) <= step:
+                    self.angle = want
+                else:
+                    self.angle += step if diff > 0 else -step
+                # fire only if target is within the firing cone
+                if self.fire_cd <= 0 and abs(diff) < self.cone:
                     self.fire_cd = 0.45
-                    bullets.append(Bullet(self.x, self.y, best))
+                    bx = self.x + math.cos(self.angle) * 22
+                    by = self.y + math.sin(self.angle) * 22
+                    bullets.append(Bullet(bx, by, best))
+                    # the muzzle report draws zombies' attention to this turret
+                    for z in zombies:
+                        if not z.alive: continue
+                        if math.hypot(z.x - self.x,
+                                      z.y - self.y) < self.aggro_radius:
+                            z.aggro_target = (self.x, self.y)
+                            z.aggro_t      = 6.0
 
     def draw(self, surf):
         if self.kind == "SPIKE":
@@ -583,31 +716,28 @@ class Trap:
                     pygame.draw.line(surf, (70, 55, 40),
                                      (x1, y1), (sx, sy), 2)
         elif self.kind == "FLAME":
-            # barrel
+            # brazier
             pygame.draw.circle(surf, (60, 40, 30), (int(self.x), int(self.y)), 14)
             pygame.draw.circle(surf, (90, 60, 40), (int(self.x), int(self.y)), 14, 2)
-            # flame puff (animated, with fade as life ends)
             life_t = self.life - self.t
-            scale = 1.0 if life_t > 1.5 else max(0.3, life_t / 1.5)
-            for i in range(10):
-                a = self.t * 4 + i * (math.tau / 10)
-                rr = self.r * scale * (0.55 + 0.4 * math.sin(self.t * 6 + i))
-                fx = self.x + math.cos(a) * rr * 0.5
-                fy = self.y + math.sin(a) * rr * 0.5
+            scale = 1.0 if life_t > 3 else max(0.35, life_t / 3)
+            for i in range(12):
+                a = self.t * 3 + i * (math.tau / 12)
+                rr = self.r * scale * (0.55 + 0.4 * math.sin(self.t * 5 + i))
+                fx = self.x + math.cos(a) * rr * 0.55
+                fy = self.y + math.sin(a) * rr * 0.55
                 pygame.draw.circle(surf, COL_FLAME_O, (int(fx), int(fy)),
-                                   max(3, int(8 * scale)))
+                                   max(3, int(9 * scale)))
                 pygame.draw.circle(surf, COL_FLAME_Y, (int(fx), int(fy)),
                                    max(2, int(4 * scale)))
         elif self.kind == "FENCE":
-            f = max(0, self.hp / 220)
-            # base posts
+            f = max(0, self.hp / 350)
             for off in (-self.r, self.r):
                 pygame.draw.rect(surf, (90, 90, 100),
                                  (int(self.x + off) - 3, int(self.y) - 18, 6, 36))
-            # crackle ring
-            n = 14
+            n = 16
             for i in range(n):
-                a1 = self.t * 5 + i * (math.tau / n)
+                a1 = self.t * 6 + i * (math.tau / n)
                 a2 = a1 + 0.4
                 r1 = self.r * (0.7 + 0.3 * random.random())
                 r2 = self.r * (0.7 + 0.3 * random.random())
@@ -617,19 +747,93 @@ class Trap:
                 y2 = self.y + math.sin(a2) * r2
                 col = (int(120 + 100 * f), int(180 + 40 * f), 255)
                 pygame.draw.line(surf, col, (x1, y1), (x2, y2), 2)
+        elif self.kind == "TAR":
+            # oily blob with a slow inner ripple
+            blob = pygame.Surface((self.r * 2 + 4, self.r * 2 + 4), pygame.SRCALPHA)
+            pygame.draw.circle(blob, (30, 22, 32, 200),
+                               (self.r + 2, self.r + 2), self.r)
+            pygame.draw.circle(blob, (60, 45, 60, 230),
+                               (self.r + 2, self.r + 2), self.r, 3)
+            surf.blit(blob, (int(self.x) - self.r - 2, int(self.y) - self.r - 2))
+            for i in range(5):
+                a = self.t * 1.5 + i * (math.tau / 5)
+                rr = self.r * 0.55 * (0.7 + 0.3 * math.sin(self.t * 2 + i))
+                fx = int(self.x + math.cos(a) * rr)
+                fy = int(self.y + math.sin(a) * rr)
+                pygame.draw.circle(surf, (70, 55, 75), (fx, fy), 3)
+        elif self.kind == "WIRE":
+            f = max(0, self.hp / 500)
+            # criss-cross strands
+            pygame.draw.circle(surf, (50, 45, 38),
+                               (int(self.x), int(self.y)), self.r, 1)
+            for i in range(20):
+                a1 = i * (math.tau / 20)
+                a2 = a1 + 1.4
+                x1 = self.x + math.cos(a1) * self.r * 0.95
+                y1 = self.y + math.sin(a1) * self.r * 0.95
+                x2 = self.x + math.cos(a2) * self.r * 0.55
+                y2 = self.y + math.sin(a2) * self.r * 0.55
+                pygame.draw.line(surf, (170, 160, 130), (x1, y1), (x2, y2), 1)
+            # barb dots
+            for i in range(12):
+                a = i * (math.tau / 12)
+                bx = int(self.x + math.cos(a) * self.r * 0.7)
+                by = int(self.y + math.sin(a) * self.r * 0.7)
+                pygame.draw.circle(surf, (220, 210, 180), (bx, by), 2)
+            # subtle damage tint
+            if f < 0.5:
+                pygame.draw.circle(surf, (90, 50, 50),
+                                   (int(self.x), int(self.y)), int(self.r * 0.6), 1)
+        elif self.kind == "MINE":
+            if self.boom:
+                # expanding ring + bright core
+                k = clamp(self.boom_age / 0.5, 0, 1)
+                rr = int(self.boom_r * k)
+                ring = pygame.Surface((rr * 2 + 4, rr * 2 + 4), pygame.SRCALPHA)
+                alpha = int(220 * (1 - k))
+                pygame.draw.circle(ring, (255, 200, 80, alpha),
+                                   (rr + 2, rr + 2), rr, 6)
+                pygame.draw.circle(ring, (255, 120, 40, alpha // 2),
+                                   (rr + 2, rr + 2), max(2, rr - 6), 4)
+                surf.blit(ring, (int(self.x) - rr - 2, int(self.y) - rr - 2))
+            else:
+                # disk with blink
+                pygame.draw.circle(surf, (60, 50, 40),
+                                   (int(self.x), int(self.y)), self.r)
+                pygame.draw.circle(surf, (120, 60, 40),
+                                   (int(self.x), int(self.y)), self.r, 2)
+                blink = (math.sin(self.t * 8) > 0) if self.arm_t <= 0 \
+                        else (math.sin(self.t * 20) > 0)
+                if blink:
+                    pygame.draw.circle(surf, (255, 80, 40),
+                                       (int(self.x), int(self.y)), 4)
         elif self.kind == "TURRET":
             pygame.draw.circle(surf, (60, 60, 70), (int(self.x), int(self.y)), self.r + 3)
             pygame.draw.circle(surf, COL_TURRET, (int(self.x), int(self.y)), self.r)
             pygame.draw.circle(surf, (40, 40, 50), (int(self.x), int(self.y)), self.r, 2)
-            # barrel pointing toward nearest target direction (just rotate over time)
-            ang = self.t * 1.2
-            # actually point at last fire dir if we have one — keep simple: spin slow
-            bx = self.x + math.cos(ang) * 22
-            by = self.y + math.sin(ang) * 22
+            # 45° firing cone (faint) — shows the player exactly what it can hit
+            cone_pts = [(int(self.x), int(self.y))]
+            steps = 10
+            cone_len = min(self.range, 200)
+            for i in range(steps + 1):
+                a = self.angle - self.cone + (2 * self.cone) * (i / steps)
+                cone_pts.append((int(self.x + math.cos(a) * cone_len),
+                                 int(self.y + math.sin(a) * cone_len)))
+            cs = pygame.Surface((int(cone_len) * 2 + 4, int(cone_len) * 2 + 4),
+                                pygame.SRCALPHA)
+            ox, oy = int(self.x) - int(cone_len) - 2, int(self.y) - int(cone_len) - 2
+            shifted = [(p[0] - ox, p[1] - oy) for p in cone_pts]
+            pygame.draw.polygon(cs, (200, 200, 220, 28), shifted)
+            pygame.draw.polygon(cs, (200, 200, 220, 70), shifted, 1)
+            surf.blit(cs, (ox, oy))
+            # barrel
+            bx = self.x + math.cos(self.angle) * 22
+            by = self.y + math.sin(self.angle) * 22
             pygame.draw.line(surf, (40, 40, 50),
                              (int(self.x), int(self.y)), (int(bx), int(by)), 6)
+            pygame.draw.circle(surf, (200, 200, 200), (int(bx), int(by)), 3)
             # hp ring
-            f = max(0, self.hp / 160)
+            f = max(0, self.hp / 130)
             pygame.draw.arc(surf, COL_HP_OK if f > 0.4 else COL_RED,
                             (int(self.x) - self.r - 6, int(self.y) - self.r - 6,
                              (self.r + 6) * 2, (self.r + 6) * 2),
@@ -667,6 +871,44 @@ class Bullet:
                          (int(self.x), int(self.y)),
                          (int(self.x - self.vx * 0.012),
                           int(self.y - self.vy * 0.012)), 2)
+
+
+class TrapPickup:
+    """A trap-blueprint dropped by a boss or by a swap. Persistent."""
+    PICKUP_R = 22
+
+    def __init__(self, kind, x, y):
+        self.kind  = kind
+        self.x, self.y = float(x), float(y)
+        self.alive = True
+        self.t     = random.uniform(0, math.tau)
+
+    def update(self, dt):
+        self.t += dt  # purely cosmetic
+
+    def draw(self, surf):
+        col  = TRAP_BY_KEY[self.kind]["color"]
+        name = TRAP_BY_KEY[self.kind]["name"]
+        bob  = math.sin(self.t * 2) * 3
+        cx, cy = int(self.x), int(self.y - bob)
+        # halo
+        glow = pygame.Surface((self.PICKUP_R * 4, self.PICKUP_R * 4),
+                              pygame.SRCALPHA)
+        for i in range(3):
+            pygame.draw.circle(glow,
+                               (col[0], col[1], col[2], 50 - i * 12),
+                               (self.PICKUP_R * 2, self.PICKUP_R * 2),
+                               int(self.PICKUP_R * 1.6 - i * 4))
+        surf.blit(glow, (cx - self.PICKUP_R * 2, cy - self.PICKUP_R * 2))
+        # diamond crystal
+        s = self.PICKUP_R
+        pts = [(cx, cy - s), (cx + s * 2 // 3, cy),
+               (cx, cy + s), (cx - s * 2 // 3, cy)]
+        pygame.draw.polygon(surf, col, pts)
+        pygame.draw.polygon(surf, (255, 255, 255), pts, 2)
+        # name tag below
+        blit(surf, name.upper(), 14, (240, 230, 200),
+             (cx, cy + s + 14))
 
 
 class Scrap:
@@ -823,14 +1065,21 @@ class Game:
         self.scraps  = []
         self.floats  = []
         self.particles = []
+        self.pickups = []
+        # roll the run's unlockable-trap pool fresh on each new game
+        self.run_pool = random.sample(UNLOCKABLE_TRAPS,
+                                      min(RUN_POOL_SIZE, len(UNLOCKABLE_TRAPS)))
+        self.unlocked = list(DEFAULT_TRAPS)  # ["SPIKE", "TURRET"]
         self.wave    = 0
         self.kills   = 0
         self.phase   = "INTRO"   # INTRO | ACTIVE | SCAVENGE
         self.phase_t = WAVE_INTRO_T
-        self.spawn_q = []        # list of (delay_after_phase_start, fn)
-        self.wave_total = 0      # total zombies in this wave (for HUD)
+        self.spawn_q = []
+        self.wave_total = 0
         self.wave_killed = 0
-        self._next_wave()        # start wave 1
+        self._jump_held_t = 0.0
+        self._jump_consumed = False
+        self._next_wave()
 
     # ------------------ wave management ------------------
     def _next_wave(self):
@@ -950,20 +1199,31 @@ class Game:
             blit(screen, v, 24, (200, 170, 80), (CX - 30, y), anchor="midleft")
             y += 36
 
-        # trap list
+        # trap list — start kit + this-run drop pool
         y = 660
-        blit(screen, "your inventory of mild deterrents:", 18, COL_DIM,
-             (CX, y - 28))
-        for i, t in enumerate(TRAPS):
-            x = CX - 540 + i * 360
-            box = pygame.Rect(x, y, 320, 110)
-            pygame.draw.rect(screen, (40, 32, 26), box)
+        blit(screen, "you start with:", 18, COL_DIM, (CX - 480, y - 28),
+             anchor="midleft")
+        blit(screen, "boss zombies drop one of these (rolled per run):",
+             18, COL_DIM, (CX + 120, y - 28), anchor="midleft")
+        cards = [(k, True)  for k in DEFAULT_TRAPS]            # start kit
+        cards += [(k, False) for k in self.run_pool]            # this run's pool
+        for i, (key, owned) in enumerate(cards):
+            t = TRAP_BY_KEY[key]
+            x = CX - 540 + i * 220
+            box = pygame.Rect(x, y, 200, 130)
+            pygame.draw.rect(screen, (40, 32, 26) if owned else (28, 24, 22),
+                             box)
             pygame.draw.rect(screen, t["color"], box, 2)
-            blit(screen, t["name"], 24, t["color"], (box.centerx, box.y + 22))
-            blit(screen, f"{t['cost']} scrap", 18, COL_SCRAP,
-                 (box.centerx, box.y + 50))
-            blit(screen, t["blurb"], 14, COL_DIM,
-                 (box.centerx, box.y + 80))
+            tag = "START" if owned else "DROP"
+            blit(screen, tag, 11,
+                 (180, 220, 180) if owned else (220, 180, 80),
+                 (box.x + 8, box.y + 8), anchor="topleft")
+            blit(screen, t["name"], 18, t["color"],
+                 (box.centerx, box.y + 36))
+            blit(screen, f"{t['cost']} scrap", 14, COL_SCRAP,
+                 (box.centerx, box.y + 62))
+            blit(screen, t["blurb"], 11, COL_DIM,
+                 (box.centerx, box.y + 96))
 
         # blink prompt
         if int(self._title_t * 2) % 2 == 0:
@@ -998,7 +1258,7 @@ class Game:
         else:
             if self._jump_held_t > 0 and not self._jump_consumed \
                     and self._jump_held_t < 0.35:
-                self.player.sel = (self.player.sel + 1) % len(TRAPS)
+                self.player.sel = (self.player.sel + 1) % len(self.unlocked)
             self._jump_held_t   = 0.0
             self._jump_consumed = False
 
@@ -1058,6 +1318,16 @@ class Game:
                     f"+{s.amount}", s.x, s.y - 6, COL_SCRAP, 14, 0.9))
         self.scraps = [s for s in self.scraps if s.alive]
 
+        # trap pickups (persistent — never expire on their own)
+        for pu in self.pickups:
+            pu.update(dt)
+        for pu in self.pickups:
+            if not pu.alive: continue
+            if math.hypot(pu.x - self.player.x, pu.y - self.player.y) \
+                    < TrapPickup.PICKUP_R + PLAYER_R + 4:
+                self._acquire_pickup(pu)
+        self.pickups = [p for p in self.pickups if p.alive]
+
         # floats / particles
         for f in self.floats: f.update(dt)
         self.floats = [f for f in self.floats if f.alive]
@@ -1093,7 +1363,10 @@ class Game:
     def _try_place_trap(self):
         if self.phase == "INTRO":
             return
-        trap = TRAPS[self.player.sel]
+        if not self.unlocked:
+            return
+        self.player.sel = self.player.sel % len(self.unlocked)
+        trap = TRAP_BY_KEY[self.unlocked[self.player.sel]]
         # cannot place inside bunker
         if in_bunker(self.player.x, self.player.y, pad=4):
             self.floats.append(FloatingText(
@@ -1119,6 +1392,46 @@ class Game:
             f"-{trap['cost']}", self.player.x, self.player.y - 22,
             COL_DIM, 14, 0.9))
 
+    def _acquire_pickup(self, pu):
+        name = TRAP_BY_KEY[pu.kind]["name"]
+        # duplicate of something the player already owns → some scrap instead
+        if pu.kind in self.unlocked:
+            self.player.scrap += 20
+            self.floats.append(FloatingText(
+                f"already have {name} — +20 scrap",
+                pu.x, pu.y - 6, COL_SCRAP, 14, 1.4))
+            pu.alive = False
+            return
+        # free slot — just slot it in and auto-select it
+        if len(self.unlocked) < MAX_TRAP_SLOTS:
+            self.unlocked.append(pu.kind)
+            self.player.sel = len(self.unlocked) - 1
+            self.floats.append(FloatingText(
+                f"unlocked  {name.upper()}",
+                pu.x, pu.y - 6, (220, 220, 140), 24, 1.8))
+            pu.alive = False
+            return
+        # slots full — only swap with the currently selected slot, and only
+        # if that slot is a non-default (so SPIKE/TURRET stick around).
+        sel_key = self.unlocked[self.player.sel]
+        if TRAP_BY_KEY[sel_key]["default"]:
+            self.floats.append(FloatingText(
+                "select a non-default trap to swap",
+                self.player.x, self.player.y - 22,
+                (240, 180, 100), 14, 1.2))
+            return
+        # do the swap: the old kind drops here as a fresh pickup
+        old_name = TRAP_BY_KEY[sel_key]["name"]
+        self.unlocked[self.player.sel] = pu.kind
+        # spawn dropped pickup slightly offset so it doesn't re-trigger immediately
+        ox = self.player.x - self.player.dirx * 32
+        oy = self.player.y - self.player.diry * 32
+        self.pickups.append(TrapPickup(sel_key, ox, oy))
+        self.floats.append(FloatingText(
+            f"swapped: {old_name} -> {name}",
+            pu.x, pu.y - 6, (220, 220, 140), 18, 1.8))
+        pu.alive = False
+
     def _on_kill(self, z):
         # avoid double-counting if already counted
         if getattr(z, "_counted", False):
@@ -1129,6 +1442,12 @@ class Game:
         # scrap drop
         amount = 25 if z.boss else random.randint(1, 3)
         self.scraps.append(Scrap(z.x, z.y, amount))
+        # bosses drop a trap pickup from the run pool (prefer something the
+        # player doesn't already own, otherwise just any pool entry)
+        if z.boss and self.run_pool:
+            unowned = [k for k in self.run_pool if k not in self.unlocked]
+            kind = random.choice(unowned) if unowned else random.choice(self.run_pool)
+            self.pickups.append(TrapPickup(kind, z.x, z.y))
         # blood particles
         for _ in range(8 if not z.boss else 16):
             self.particles.append(Particle(
@@ -1165,6 +1484,8 @@ class Game:
         for t in self.traps: t.draw(screen)
         # bunker
         self.bunker.draw(screen)
+        # trap pickups (above ground, below zombies)
+        for pu in self.pickups: pu.draw(screen)
         # zombies
         for z in self.zombies: z.draw(screen)
         # scrap
@@ -1227,42 +1548,50 @@ class Game:
         blit(screen, f"{self.player.scrap}", 36, COL_SCRAP,
              (W - 30, 50), anchor="midright")
 
-        # ---- bottom HUD: trap selector ----
+        # ---- bottom HUD: trap selector (only unlocked traps) ----
         pygame.draw.rect(screen, COL_HUD_BG, (0, H - HUD_BOT_H, W, HUD_BOT_H))
         pygame.draw.line(screen, COL_HUD_LINE,
                          (0, H - HUD_BOT_H), (W, H - HUD_BOT_H), 2)
-        slot_w = 320
-        gap = 30
-        total = len(TRAPS) * slot_w + (len(TRAPS) - 1) * gap
-        x0 = (W - total) // 2
-        for i, t in enumerate(TRAPS):
+        n_slots = MAX_TRAP_SLOTS
+        slot_w  = 360
+        gap     = 24
+        total   = n_slots * slot_w + (n_slots - 1) * gap
+        x0      = (W - total) // 2
+        sel_idx = self.player.sel % max(1, len(self.unlocked))
+        for i in range(n_slots):
             x = x0 + i * (slot_w + gap)
             y = H - HUD_BOT_H + 14
             box = pygame.Rect(x, y, slot_w, HUD_BOT_H - 28)
-            sel = (i == self.player.sel)
+            if i >= len(self.unlocked):
+                # empty slot — show locked
+                pygame.draw.rect(screen, (24, 20, 16), box)
+                pygame.draw.rect(screen, (50, 44, 36), box, 2)
+                blit(screen, "LOCKED", 18, (90, 80, 60),
+                     (box.centerx, box.centery - 6))
+                blit(screen, "boss drop", 14, (70, 60, 45),
+                     (box.centerx, box.centery + 16))
+                continue
+            t = TRAP_BY_KEY[self.unlocked[i]]
+            sel = (i == sel_idx)
             bg = (50, 40, 32) if sel else (30, 24, 20)
             pygame.draw.rect(screen, bg, box)
             border_col = t["color"] if sel else (60, 54, 44)
             pygame.draw.rect(screen, border_col, box, 3 if sel else 2)
-            # name
             blit(screen, t["name"], 24,
                  (240, 230, 200) if sel else COL_DIM,
-                 (box.centerx - 70, box.y + 28))
-            # cost
+                 (box.centerx - 70, box.y + 26))
             cost_col = COL_SCRAP if self.player.scrap >= t["cost"] else COL_RED
             blit(screen, f"{t['cost']}", 36, cost_col,
                  (box.right - 30, box.centery), anchor="midright")
             blit(screen, "scrap", 14, COL_DIM,
                  (box.right - 30, box.bottom - 20), anchor="midright")
-            # selected indicator
             if sel:
                 pygame.draw.polygon(screen, t["color"],
                                     [(box.centerx - 10, box.y - 8),
                                      (box.centerx + 10, box.y - 8),
                                      (box.centerx, box.y - 0)])
-            # blurb
             blit(screen, t["blurb"], 14, COL_DIM,
-                 (box.x + 14, box.bottom - 20), anchor="midleft")
+                 (box.x + 14, box.bottom - 18), anchor="midleft")
 
         # kills counter (bottom right area, above HUD strip)
         blit(screen, f"kills: {self.kills}", 18, COL_DIM,
