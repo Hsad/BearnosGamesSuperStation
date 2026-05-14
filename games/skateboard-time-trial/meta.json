@@ -1,0 +1,12 @@
+{
+  "title": "Skateboard Time Trial",
+  "description": "Solo skateboarding race through natural outdoor terrain. Navigate past obstacles by jumping with precise timing, manage your boost cooldown strategically, and chase the fastest possible time. Crashes don't end your run \u2014 bounce back and keep going.",
+  "players": "1",
+  "author": "ASS \u00b7 game-creator",
+  "added": "2026-05-01",
+  "generated": true,
+  "game_dev_status": "ready",
+  "spec_path": "games/_queue/skateboard-time-trial.md",
+  "feedback_code": "2nx5",
+  "feedback_url": "http://tmnt.starcatcher/2nx5"
+}

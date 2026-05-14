@@ -2,9 +2,27 @@
   "solo": [
     {
       "name": "DAK",
+      "money": 122,
+      "bricks": 236,
+      "time": "02:22"
+    },
+    {
+      "name": "ASS",
+      "money": 103,
+      "bricks": 236,
+      "time": "02:22"
+    },
+    {
+      "name": "DAK",
       "money": 98,
       "bricks": 94,
       "time": "01:09"
+    },
+    {
+      "name": "AAA",
+      "money": 36,
+      "bricks": 53,
+      "time": "00:25"
     },
     {
       "name": "ABA",
@@ -13,28 +31,10 @@
       "time": "00:56"
     },
     {
-      "name": "AAB",
-      "money": 12,
-      "bricks": 12,
-      "time": "00:41"
-    },
-    {
       "name": "AAA",
-      "money": 6,
-      "bricks": 6,
-      "time": "00:32"
-    },
-    {
-      "name": "AAA",
-      "money": 5,
-      "bricks": 5,
-      "time": "00:29"
-    },
-    {
-      "name": "AAA",
-      "money": 2,
-      "bricks": 2,
-      "time": "00:11"
+      "money": 16,
+      "bricks": 53,
+      "time": "00:25"
     }
   ],
   "team": [

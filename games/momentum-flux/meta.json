@@ -1,0 +1,12 @@
+{
+  "title": "Momentum Flux",
+  "description": "A solo neon platformer about gliding, drifting, and chaining momentum through five increasingly chaotic obstacle courses. Movement is floaty and forgiving — your character coasts on inertia rather than snapping to the stick — and the only way forward is to read the level's physics. Bounce pads punt you skyward, magenta zones flip gravity mid-flight, cyan flow strips drag you along like a current, and moving platforms threaten to leave you stranded over neon hazards. A boost dash on ATTACK gives a short directional burst for clutch saves and impossible jumps. There are no enemies; the level itself is the antagonist, layering mechanics until every screen feels like a glitching neon puzzle that you have to surf to the exit.",
+  "players": "1",
+  "author": "claude",
+  "added": "2026-05-01",
+  "generated": true,
+  "game_dev_status": "ok",
+  "spec_path": "games/_queue/momentum-flux.md",
+  "feedback_code": "tbpw",
+  "feedback_url": "http://tmnt.starcatcher/tbpw"
+}

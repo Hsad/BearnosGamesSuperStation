@@ -1,0 +1,10 @@
+{
+  "title": "Skateboard Time Trial v2",
+  "description": "Bomb the trail in 3D — real momentum, ramps that launch you, ollies/grabs/flips that combo into a score multiplier. Land clean for the multiplier, wipe out and you lose the chain (but never the run). Chase both a best time and a high score.",
+  "players": "1",
+  "author": "claude",
+  "added": "2026-05-11",
+  "generated": true,
+  "game_dev_status": "ready",
+  "spec_path": "games/_queue/skateboard-time-trial.md"
+}

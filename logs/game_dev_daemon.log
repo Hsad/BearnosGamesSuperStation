@@ -140,3 +140,23 @@ scp: Connection closed
 2026-04-26 00:13:53,431  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/space-command.md', 'arcade@spark.local:/tmp/space-command.md']' returned non-zero exit status 255.
 2026-04-26 00:13:53,434  ERROR    Build failed for: space-command
 2026-04-26 00:13:53,434  ERROR    Build failed for: space-command
+2026-05-01 15:03:27,951  INFO     Processing spec: momentum-flux
+2026-05-01 15:03:27,951  INFO     Processing spec: momentum-flux
+2026-05-01 15:03:27,956  INFO     Copying spec to arcade@spark.local:/tmp/momentum-flux.md
+2026-05-01 15:03:27,956  INFO     Copying spec to arcade@spark.local:/tmp/momentum-flux.md
+ssh: Could not resolve hostname spark.local: Name or service not known
+scp: Connection closed
+2026-05-01 15:03:33,065  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/momentum-flux.md', 'arcade@spark.local:/tmp/momentum-flux.md']' returned non-zero exit status 255.
+2026-05-01 15:03:33,065  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/momentum-flux.md', 'arcade@spark.local:/tmp/momentum-flux.md']' returned non-zero exit status 255.
+2026-05-01 15:03:33,066  ERROR    Build failed for: momentum-flux
+2026-05-01 15:03:33,066  ERROR    Build failed for: momentum-flux
+2026-05-01 15:42:03,501  INFO     Processing spec: skateboard-time-trial
+2026-05-01 15:42:03,501  INFO     Processing spec: skateboard-time-trial
+2026-05-01 15:42:03,503  INFO     Copying spec to arcade@spark.local:/tmp/skateboard-time-trial.md
+2026-05-01 15:42:03,503  INFO     Copying spec to arcade@spark.local:/tmp/skateboard-time-trial.md
+ssh: Could not resolve hostname spark.local: Name or service not known
+scp: Connection closed
+2026-05-01 15:42:08,600  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/skateboard-time-trial.md', 'arcade@spark.local:/tmp/skateboard-time-trial.md']' returned non-zero exit status 255.
+2026-05-01 15:42:08,600  ERROR    SSH dispatch failed: Command '['scp', '-o', 'StrictHostKeyChecking=no', '/home/hsad/Arcade/games/_queue/skateboard-time-trial.md', 'arcade@spark.local:/tmp/skateboard-time-trial.md']' returned non-zero exit status 255.
+2026-05-01 15:42:08,606  ERROR    Build failed for: skateboard-time-trial
+2026-05-01 15:42:08,606  ERROR    Build failed for: skateboard-time-trial

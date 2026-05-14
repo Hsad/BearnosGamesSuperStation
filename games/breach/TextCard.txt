@@ -1,0 +1,28 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║   ██████╗ ██████╗ ███████╗ █████╗  ██████╗██╗  ██╗                           ║
+║   ██╔══██╗██╔══██╗██╔════╝██╔══██╗██╔════╝██║  ██║                           ║
+║   ██████╔╝██████╔╝█████╗  ███████║██║     ███████║                           ║
+║   ██╔══██╗██╔══██╗██╔══╝  ██╔══██║██║     ██╔══██║                           ║
+║   ██████╔╝██║  ██║███████╗██║  ██║╚██████╗██║  ██║                           ║
+║   ╚═════╝ ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝                           ║
+║                                                                              ║
+║                  ·   a   t a n k   d u e l   ·                               ║
+║                                                                              ║
+║       ⛤  Each player operates TWO adjacent stations  ⛤                       ║
+║                                                                              ║
+║       LEFT stick  Y :  left tread fwd / back                                 ║
+║       LEFT stick  X :  barrel pitch    (elevation)                           ║
+║       RIGHT stick Y :  right tread fwd / back                                ║
+║       RIGHT stick X :  turret yaw       (azimuth)                            ║
+║                                                                              ║
+║       LEFT  JUMP    →   load shell                                           ║
+║       LEFT  ATTACK  →   load powder  (1–3 charges = more range)              ║
+║       RIGHT JUMP    →   breach toggle  (open ↔ close)                        ║
+║       RIGHT ATTACK  →   FIRE                                                 ║
+║                                                                              ║
+║                Armor :  5 front  ·  3 side  ·  1 rear                        ║
+║                                                                              ║
+║                ·  FIRST  TO  3  ROUND  WINS  ·                               ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝

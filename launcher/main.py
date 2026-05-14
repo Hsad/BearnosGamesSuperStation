@@ -3,6 +3,7 @@ import time
 import sys
 import os
 import subprocess
+from datetime import datetime
 
 # Add launcher dir to path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -27,13 +28,21 @@ CONTROLLERS_JSON = os.path.join(ARCADE_DIR, "config", "controllers.json")
 RESCAN_INTERVAL = 5.0
 SCREENSAVER_TIMEOUT = 30.0
 DISPLAY_OFF_TIMEOUT = 300.0  # 5 minutes after last input
-WAKE_DURATION_MAX = 7.0   # wake hold required immediately after screensaver starts
-WAKE_DURATION_MIN = 0.5   # floor after 6.5 hours of screensaver
-WAKE_DECAY_PER_HR = 1.0   # seconds shed per hour
+WAKE_DURATION_MAX = 2.0   # wake hold required immediately after screensaver starts
+WAKE_DURATION_MIN = 0.1   # floor after 6.5 hours of screensaver
+WAKE_DECAY_PER_HR = 2.0   # seconds shed per hour
 WAKE_GAP_TOLERANCE = 2.0  # reset wake attempt if no input for this long
 HIDE_CHORD_WINDOW = 0.5       # P1-DOWN + P2-UP must arrive within this many seconds
-DISPLAY_WAKE_DELAY = 15.0     # seconds after display power-on before showing boot (screen warm-up)
+DISPLAY_WAKE_DELAY = 7.0      # seconds after display power-on before showing boot (screen warm-up)
+NIGHT_START_HOUR = 20         # 8pm: enter "always-awake" mode
+NIGHT_END_HOUR = 6            # 6am: resume daytime sleep-on-idle
 DEV_MODE = os.environ.get("ARCADE_DEV") == "1"
+
+def _is_night_mode() -> bool:
+    h = datetime.now().hour
+    if NIGHT_START_HOUR <= NIGHT_END_HOUR:
+        return NIGHT_START_HOUR <= h < NIGHT_END_HOUR
+    return h >= NIGHT_START_HOUR or h < NIGHT_END_HOUR
 
 def _source_mtimes() -> dict[str, float]:
     result = {}
@@ -62,6 +71,7 @@ class App:
         self.wake_attempt_start: float | None = None
         self.last_wake_input_time: float | None = None
         self._recent_actions: dict[tuple[int, Action], float] = {}
+        self._was_night = False
 
     def game_list(self):
         if self._calibrate_unlocked:
@@ -195,6 +205,21 @@ def main():
             render_boot(app)
         while True:
             now = time.monotonic()
+            night = _is_night_mode()
+            if night and not app._was_night:
+                if app.display_off:
+                    _display_power(True)
+                    app.display_off = False
+                    time.sleep(DISPLAY_WAKE_DELAY)
+                app.screensaver_active = False
+                app.screensaver_start_time = None
+                app.wake_attempt_start = None
+                app.last_wake_input_time = None
+                app.last_input_time = time.monotonic()
+                if app.state == "MENU":
+                    render(app)
+            app._was_night = night
+
             if now - app.last_refresh >= RESCAN_INTERVAL:
                 old_count = len(app.game_list())
                 app.rescan()
@@ -224,7 +249,7 @@ def main():
                     while poll_input(app.fds, app.ctrl, timeout_ms=0):  # drain held buttons
                         pass
 
-            if app.state == "MENU" and not app.display_off:
+            if app.state == "MENU" and not app.display_off and not night:
                 idle = now - app.last_input_time
                 if idle >= DISPLAY_OFF_TIMEOUT:
                     app.display_off = True

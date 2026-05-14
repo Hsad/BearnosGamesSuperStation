@@ -181,7 +181,7 @@ TRAPS = [
         "key":   "MINE",
         "name":  "Claymore",
         "blurb": "one BIG bang. then gone.",
-        "cost":  25,
+        "cost":  8,
         "color": (180, 60, 40),
         "default": False,
     },
@@ -561,8 +561,8 @@ class Trap:
         elif kind == "MINE":
             # One-shot AOE. Armed after a short setup so it doesn't insta-pop.
             self.arm_t   = 0.6
-            self.r       = 22       # trigger radius
-            self.boom_r  = 110      # AOE radius
+            self.r       = 26       # trigger radius
+            self.boom_r  = 170      # AOE radius
             self.dmg     = 220
             self.boom    = False    # set True on the frame it explodes
             self.boom_age= 0.0

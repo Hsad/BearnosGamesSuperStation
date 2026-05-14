@@ -1,0 +1,1 @@
+API Error: 500 model requires more system memory (82.2 GiB) than is available (16.1 GiB). This is a server-side issue, usually temporary — try again in a moment. If it persists, check status.claude.com.

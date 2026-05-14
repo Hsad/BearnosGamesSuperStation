@@ -23,12 +23,13 @@ GLOW_W = SCREEN_W // 4   # 480
 GLOW_H = SCREEN_H // 4   # 270
 FONT_SIZE = 22
 
-COL_BG     = (  8,   8,   6)
-COL_CREAM  = (240, 235, 220)
-COL_SEPIA  = (190, 185, 170)
-COL_DIM    = ( 90,  85,  75)
-COL_ACCENT = (160, 150, 120)
-COL_DANGER = (200, 140,  90)
+COL_BG       = (  8,   8,   6)
+COL_CREAM    = (240, 235, 220)
+COL_SEPIA    = (190, 185, 170)
+COL_DIM      = ( 90,  85,  75)
+COL_ACCENT   = (160, 150, 120)
+COL_DANGER   = (200, 140,  90)
+COL_PHOSPHOR = ( 74, 210,  90)
 
 BARREL_K       = 0.15
 SCANLINE_ALPHA = 70 / 255.0
@@ -604,7 +605,8 @@ def _render_textcard_full(surf: pygame.Surface, game, rows: int) -> None:
         if r > content_end:
             break
         if line:
-            surf.blit(_glyph(line, COL_CREAM), (start_x, (r - 1) * _char_h))
+            tc_col = COL_PHOSPHOR if getattr(game, "is_creator", False) else COL_CREAM
+            surf.blit(_glyph(line, tc_col), (start_x, (r - 1) * _char_h))
 
     if getattr(game, "game_dev_status", None) == "coming_soon":
         banner_w  = max(len(l) for l in _COMING_SOON_BANNER)
