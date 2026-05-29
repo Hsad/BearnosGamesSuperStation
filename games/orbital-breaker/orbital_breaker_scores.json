@@ -32,12 +32,22 @@
     },
     {
       "name": "AAA",
-      "money": 16,
-      "bricks": 53,
-      "time": "00:25"
+      "money": 20,
+      "bricks": 35,
+      "time": "00:34"
     }
   ],
   "team": [
+    {
+      "name": "DAK",
+      "money": 307,
+      "bricks": 332,
+      "time": "04:05",
+      "names": [
+        "DAK",
+        "BUT"
+      ]
+    },
     {
       "name": "BAD",
       "money": 11,

@@ -84,7 +84,7 @@ def _make_datamatrix_lines(game) -> list[str]:
     code = _feedback_code(game)
     if not code:
         return ["[No feedback code configured]"]
-    url = f"http://tmnt.starcatcher/{code}"
+    url = f"https://tmnt.starcatcher/{code}"
     try:
         import sys, types
         if "distutils" not in sys.modules:
@@ -118,7 +118,7 @@ def _make_qr_lines(game) -> list[str]:
     code = _feedback_code(game)
     if not code:
         return ["[No feedback code configured]"]
-    url = f"http://tmnt.starcatcher/{code}"
+    url = f"https://tmnt.starcatcher/{code}"
     try:
         import qrcode as _qr
         qr = _qr.QRCode(border=4)

@@ -3,6 +3,12 @@ Description=Arcade Feedback Server
 After=network.target
 
 [Service]
+User=hsad
+Group=hsad
+Environment=HOME=/home/hsad
+Environment=PATH=/home/hsad/.local/bin:/usr/local/bin:/usr/bin:/bin
+# Allow binding privileged ports (80/443) while running as hsad
+AmbientCapabilities=CAP_NET_BIND_SERVICE
 ExecStart=/usr/bin/python3 /home/hsad/Arcade/feedback_server.py
 WorkingDirectory=/home/hsad/Arcade
 Restart=always

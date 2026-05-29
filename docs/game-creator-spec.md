@@ -160,7 +160,7 @@ Config lives in `launcher/daemon_config.json`:
 ```json
 {
   "dispatch_mode": "spark",
-  "spark_host": "spark.local",
+  "spark_host": "192.168.1.150",       // mDNS name: spark.local
   "spark_user": "arcade",
   "spark_agent_path": "/home/arcade/arcade-builder/run_agent.sh",
   "result_pickup_path": "/home/arcade/arcade-builder/output/",

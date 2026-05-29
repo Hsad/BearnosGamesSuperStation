@@ -28,7 +28,7 @@ CONTROLLERS_JSON = os.path.join(ARCADE_DIR, "config", "controllers.json")
 RESCAN_INTERVAL = 5.0
 SCREENSAVER_TIMEOUT = 30.0
 DISPLAY_OFF_TIMEOUT = 300.0  # 5 minutes after last input
-WAKE_DURATION_MAX = 2.0   # wake hold required immediately after screensaver starts
+WAKE_DURATION_MAX = 1.0   # wake hold required immediately after screensaver starts
 WAKE_DURATION_MIN = 0.1   # floor after 6.5 hours of screensaver
 WAKE_DECAY_PER_HR = 2.0   # seconds shed per hour
 WAKE_GAP_TOLERANCE = 2.0  # reset wake attempt if no input for this long
@@ -251,7 +251,7 @@ def main():
 
             if app.state == "MENU" and not app.display_off and not night:
                 idle = now - app.last_input_time
-                if idle >= DISPLAY_OFF_TIMEOUT:
+                if False and idle >= DISPLAY_OFF_TIMEOUT:
                     app.display_off = True
                     app.screensaver_active = True
                     app.screensaver_start_time = now

@@ -13,9 +13,14 @@ import sys
 import json
 import re
 import time
+import shutil
 import subprocess
 import logging
 import signal
+
+# Resolve claude explicitly: systemd-started parents have a minimal PATH that
+# omits ~/.local/bin, so a bare "claude" subprocess fails with FileNotFoundError.
+CLAUDE = shutil.which("claude") or os.path.expanduser("~/.local/bin/claude")
 
 ARCADE_DIR   = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 QUEUE_DIR    = os.path.join(ARCADE_DIR, "games", "_queue")
@@ -135,7 +140,7 @@ Write all files now. Do not explain, just write the code."""
 
         log.info("Dispatching local build for %s", slug)
         proc = subprocess.run(
-            ["claude", "-p", "--dangerously-skip-permissions",
+            [CLAUDE, "-p", "--dangerously-skip-permissions",
              "--output-format", "json", task_prompt],
             capture_output=True, text=True, timeout=600,
             cwd=dest,
@@ -184,7 +189,7 @@ def _dispatch_ssh(spec_path: str, config: dict) -> bool:
     SSH to a remote host, copy the spec, run the agent, SCP the result back.
     Returns True on success.
     """
-    host       = config.get("spark_host", "spark.local")
+    host       = config.get("spark_host", "192.168.1.150")  # mDNS: spark.local
     user       = config.get("spark_user", "arcade")
     agent_path = config.get("spark_agent_path", "/home/arcade/arcade-builder/run_agent.sh")
     pickup     = config.get("result_pickup_path", "/home/arcade/arcade-builder/output/")

@@ -5,6 +5,7 @@ import os
 import sys
 import json
 import re
+import shutil
 import threading
 import time
 import datetime
@@ -24,6 +25,10 @@ GAMES_DIR     = os.path.join(ARCADE_DIR, "games")
 DAEMON_SCRIPT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "game_dev_daemon.py")
 LOGS_DIR      = os.path.join(ARCADE_DIR, "logs")
 PROMPT_FILE   = os.path.join(ARCADE_DIR, "GAME_GEN_PROMPT.md")
+
+# Resolve claude explicitly: systemd-started parents have a minimal PATH that
+# omits ~/.local/bin, so a bare "claude" subprocess fails with FileNotFoundError.
+CLAUDE = shutil.which("claude") or os.path.expanduser("~/.local/bin/claude")
 
 MAX_QUESTIONS        = 20
 MAX_REGENERATES      = 3
@@ -111,7 +116,7 @@ def _fetch_textcard_figlet(spec_data: dict) -> str | None:
             f'Return only 2 plain text lines, max 55 chars each, nothing else.'
         )
         proc = subprocess.run(
-            ["claude", "-p", "--output-format", "json", "--model", MODEL_HAIKU, tag_prompt],
+            [CLAUDE, "-p", "--output-format", "json", "--model", MODEL_HAIKU, tag_prompt],
             capture_output=True, text=True, timeout=60,
         )
         outer = json.loads(proc.stdout)
@@ -171,7 +176,7 @@ Design brief:
     try:
         os.makedirs(LOGS_DIR, exist_ok=True)
         proc = subprocess.run(
-            ["claude", "-p", "--allowedTools", "Write", "--model", MODEL_SONNET, prompt],
+            [CLAUDE, "-p", "--allowedTools", "Write", "--model", MODEL_SONNET, prompt],
             capture_output=True, text=True, timeout=180,
         )
         with open(log_path, "w") as lf:
@@ -207,7 +212,7 @@ def _call_claude(messages: list, system_prompt: str, model: str = MODEL_HAIKU) -
     )
     try:
         proc = subprocess.run(
-            ["claude", "-p", "--output-format", "json", "--model", model,
+            [CLAUDE, "-p", "--output-format", "json", "--model", model,
              "--system-prompt", system_prompt, prompt],
             capture_output=True, text=True, timeout=90,
         )
@@ -541,7 +546,7 @@ def _run_oneshot_build(spec_path: str, slug: str, builder_id: str = "oneshot", m
         os.makedirs(LOGS_DIR, exist_ok=True)
         with open(log_path, "w") as lf:
             proc = subprocess.Popen(
-                ["claude", "-p", "--dangerously-skip-permissions", full_prompt],
+                [CLAUDE, "-p", "--dangerously-skip-permissions", full_prompt],
                 stdout=lf, stderr=lf, cwd=dest,
                 start_new_session=True,
             )
@@ -620,7 +625,7 @@ def _run_ollama_build(spec_path: str, slug: str, ollama_url: str, model: str, ti
 
         with open(log_path, "w") as lf:
             proc = subprocess.Popen(
-                ["claude", "-p", "--dangerously-skip-permissions",
+                [CLAUDE, "-p", "--dangerously-skip-permissions",
                  "--model", model, full_prompt],
                 stdout=lf, stderr=lf, cwd=dest,
                 env=env, start_new_session=True,

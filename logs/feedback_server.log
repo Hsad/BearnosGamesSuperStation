@@ -52,3 +52,106 @@
  * Running on http://127.0.0.1:80
  * Running on http://127.0.0.1:80
 [33mPress CTRL+C to quit[0m
+ * Serving Flask app 'feedback_server'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:80
+ * Running on http://127.0.0.1:80
+[33mPress CTRL+C to quit[0m
+ * Serving Flask app 'feedback_server'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:80
+ * Running on http://127.0.0.1:80
+[33mPress CTRL+C to quit[0m
+192.168.1.41 - - [19/May/2026 09:19:46] "GET / HTTP/1.1" 200 -
+192.168.1.41 - - [19/May/2026 09:19:46] "[33mGET /nice%20ports,/Trinity.txt.bak HTTP/1.0[0m" 404 -
+192.168.1.41 - - [19/May/2026 09:19:46] "GET / HTTP/1.0" 200 -
+192.168.1.41 - - [19/May/2026 09:19:46] "OPTIONS / HTTP/1.0" 200 -
+192.168.1.41 - - [19/May/2026 09:19:46] code 400, message Bad request version ('RTSP/1.0')
+192.168.1.41 - - [19/May/2026 09:19:46] "[31m[1mOPTIONS / RTSP/1.0[0m" 400 -
+192.168.1.41 - - [19/May/2026 09:19:51] code 400, message Bad HTTP/0.9 request type ('l\x00')
+192.168.1.41 - - [19/May/2026 09:19:51] "[31m[1ml\x00\x0b\x00\x00\x00\x00\x00\x00\x00\x00\x00[0m" 400 -
+192.168.1.41 - - [19/May/2026 09:19:51] code 400, message Bad request syntax ('\x16\x03\x00\x00S\x01\x00\x00O\x03\x00?G×÷º,îê²`~ó\x00ý\x82{¹Õ\x96Èw\x9bæÄÛ<=Ûoï\x10n\x00\x00(\x00\x16\x00\x13\x00')
+192.168.1.41 - - [19/May/2026 09:19:51] "[31m[1m\x16\x03\x00\x00S\x01\x00\x00O\x03\x00?G×÷º,îê²`~ó\x00ý\x82{¹Õ\x96Èw\x9bæÄÛ<=Ûoï\x10n\x00\x00(\x00\x16\x00\x13\x00[0m" 400 -
+192.168.1.41 - - [19/May/2026 09:19:51] code 400, message Bad request version ('\x00/\x00')
+192.168.1.41 - - [19/May/2026 09:19:51] "[31m[1m\x16\x03\x00\x00i\x01\x00\x00e\x03\x03U\x1c§ärandom1random2random3random4\x00\x00\x0c\x00/\x00[0m" 400 -
+ * Serving Flask app 'feedback_server'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:80
+ * Running on http://127.0.0.1:80
+[33mPress CTRL+C to quit[0m
+ * Serving Flask app 'feedback_server'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:80
+ * Running on http://127.0.0.1:80
+[33mPress CTRL+C to quit[0m
+ * Serving Flask app 'feedback_server'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:80
+ * Running on http://127.0.0.1:80
+[33mPress CTRL+C to quit[0m
+ * Serving Flask app 'feedback_server'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on https://127.0.0.1:443
+ * Running on https://192.168.1.144:443
+[33mPress CTRL+C to quit[0m
+ * Serving Flask app 'feedback_server'
+ * Debug mode: off
+Permission denied
+ * Serving Flask app 'feedback_server'
+ * Debug mode: off
+Permission denied
+ * Serving Flask app 'feedback_server'
+ * Debug mode: off
+Permission denied
+ * Serving Flask app 'feedback_server'
+ * Debug mode: off
+Permission denied
+ * Serving Flask app 'feedback_server'
+ * Debug mode: off
+Permission denied
+ * Serving Flask app 'feedback_server'
+ * Debug mode: off
+Permission denied
+ * Serving Flask app 'feedback_server'
+ * Debug mode: off
+Permission denied
+ * Serving Flask app 'feedback_server'
+ * Debug mode: off
+Permission denied
+ * Serving Flask app 'feedback_server'
+ * Debug mode: off
+Permission denied
+ * Serving Flask app 'feedback_server'
+ * Debug mode: off
+Permission denied
+ * Serving Flask app 'feedback_server'
+ * Debug mode: off
+Permission denied
+ * Serving Flask app 'feedback_server'
+ * Debug mode: off
+Permission denied
+ * Serving Flask app 'feedback_server'
+ * Debug mode: off
+Permission denied
+ * Serving Flask app 'feedback_server'
+ * Debug mode: off
+Permission denied
+ * Serving Flask app 'feedback_server'
+ * Debug mode: off
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on https://127.0.0.1:443
+ * Running on https://192.168.1.144:443
+[33mPress CTRL+C to quit[0m

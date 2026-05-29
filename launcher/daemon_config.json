@@ -5,7 +5,8 @@
     {"id": "ollama_cnc", "name": "OneShot | Gemma4:26b"},
     {"id": "queue",    "name": "Queue  (daemon)",       "hidden": true}
   ],
-  "spark_host":         "spark.local",
+  "spark_host":         "192.168.1.150",
+  "_spark_host_note":   "mDNS name: spark.local",
   "spark_user":         "arcade",
   "spark_agent_path":   "/home/arcade/arcade-builder/run_agent.sh",
   "result_pickup_path": "/home/arcade/arcade-builder/output/",
